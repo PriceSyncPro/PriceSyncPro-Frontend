@@ -43,7 +43,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-        - name: Build container image
+    - name: Build container image
       run: |
         podman build --cgroup-manager=cgroupfs -t ${{ env.IMAGE_NAME }}:latest .
         
