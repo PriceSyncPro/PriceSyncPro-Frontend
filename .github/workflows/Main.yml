@@ -74,10 +74,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Ensure Podman health
+    - name: Fix Podman permissions
       run: |
-        echo "🔧 Checking Podman health..."
+        echo "🔧 Fixing Podman permissions..."
         podman system migrate || true
+        # Systemd sorunları için cgroupfs kullan
+        export BUILDAH_ISOLATION=chroot
         
     - name: Set image tags
       run: |
@@ -86,7 +88,10 @@ jobs:
     - name: Build container image
       run: |
         echo "🐳 Building image: ${{ env.IMAGE_TAG }}"
-        podman build -t ${{ env.IMAGE_TAG }} .
+        BUILDAH_ISOLATION=chroot podman build \
+          --isolation=chroot \
+          --cgroup-manager=cgroupfs \
+          -t ${{ env.IMAGE_TAG }} .
         
     - name: Stop existing container
       run: |
@@ -98,6 +103,7 @@ jobs:
         echo "🚀 Starting new container: ${{ env.CONTAINER_NAME }}"
         podman run -d \
           --name ${{ env.CONTAINER_NAME }} \
+          --cgroup-manager=cgroupfs \
           -p ${{ env.PORT }}:3000 \
           ${{ env.IMAGE_TAG }}
           
