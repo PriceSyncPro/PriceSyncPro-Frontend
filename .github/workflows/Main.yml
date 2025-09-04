@@ -43,9 +43,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Build container image
+        - name: Build container image
       run: |
-        podman build -t ${{ env.IMAGE_NAME }}:latest .
+        podman build --cgroup-manager=cgroupfs -t ${{ env.IMAGE_NAME }}:latest .
         
     - name: Stop existing container
       run: |
@@ -56,8 +56,8 @@ jobs:
       run: |
         podman run -d \
           --name ${{ env.CONTAINER_NAME }} \
+          --cgroup-manager=cgroupfs \
           -p 3000:3000 \
-          --restart unless-stopped \
           ${{ env.IMAGE_NAME }}:latest
     - name: Cleanup build artifacts and old images
       run: |
