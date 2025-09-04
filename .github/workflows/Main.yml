@@ -22,43 +22,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js ${{ env.NODE_VERSION }}
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         
     - name: Install dependencies
-      run: |
-        npm ci --prefer-offline --no-audit
+      run: npm ci --prefer-offline --no-audit
         
     - name: Run linting
-      run: |
-        if npm run lint --if-present; then
-          echo "✅ Linting passed"
-        else
-          echo "⚠️ No lint script found, skipping..."
-        fi
+      run: npm run lint --if-present || true
       
     - name: Run tests
-      run: |
-        if npm run test --if-present; then
-          echo "✅ Tests passed successfully"
-        else
-          echo "⚠️ No tests found, skipping..."
-        fi
+      run: npm run test --if-present || true
       
     - name: Build application
       run: npm run build
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-files-${{ github.sha }}
-        path: |
-          .next/
-          package*.json
-        retention-days: 1
 
   deploy:
     name: Deploy to Production
@@ -74,24 +54,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Fix Podman permissions
-      run: |
-        echo "🔧 Fixing Podman permissions..."
-        podman system migrate || true
-        # Systemd sorunları için cgroupfs kullan
-        export BUILDAH_ISOLATION=chroot
-        
     - name: Set image tags
-      run: |
-        echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+      run: echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
         
     - name: Build container image
-      run: |
-        echo "🐳 Building image: ${{ env.IMAGE_TAG }}"
-        BUILDAH_ISOLATION=chroot podman build \
-          --isolation=chroot \
-          --cgroup-manager=cgroupfs \
-          -t ${{ env.IMAGE_TAG }} .
+      run: podman build -t ${{ env.IMAGE_TAG }} .
         
     - name: Stop existing container
       run: |
@@ -100,41 +67,31 @@ jobs:
         
     - name: Run new container
       run: |
-        echo "🚀 Starting new container: ${{ env.CONTAINER_NAME }}"
         podman run -d \
           --name ${{ env.CONTAINER_NAME }} \
-          --cgroup-manager=cgroupfs \
           -p ${{ env.PORT }}:3000 \
           ${{ env.IMAGE_TAG }}
           
     - name: Wait for container startup
-      run: |
-        echo "⏳ Waiting for container to start..."
-        sleep 10
+      run: sleep 5
         
     - name: Verify deployment
       run: |
-        echo "🔍 Verifying deployment..."
         if curl -f http://localhost:${{ env.PORT }} > /dev/null 2>&1; then
-          echo "✅ Deployment successful - Application is responding"
-          podman ps --filter "name=${{ env.CONTAINER_NAME }}"
+          echo "✅ Deployment successful"
         else
-          echo "❌ Deployment failed - Application is not responding"
-          podman logs ${{ env.CONTAINER_NAME }} --tail 50
+          echo "❌ Deployment failed"
+          podman logs ${{ env.CONTAINER_NAME }} --tail 20
           exit 1
         fi
         
     - name: Cleanup old resources
-      run: |
-        echo "🧹 Cleaning up old resources..."
-        podman image prune -f || true
-        echo "✅ Cleanup completed"
+      run: podman image prune -f || true
         
     - name: Deployment summary
       run: |
-        echo "🎉 Deployment Summary:"
+        echo "🎉 Deployment Complete:"
         echo "📦 Image: ${{ env.IMAGE_TAG }}"
         echo "🐳 Container: ${{ env.CONTAINER_NAME }}"
         echo "🌐 Port: ${{ env.PORT }}"
-        echo "📝 Commit: ${{ github.sha }}"
-        echo "⏰ Deployed at: $(date)"
+        echo "⏰ $(date)"
