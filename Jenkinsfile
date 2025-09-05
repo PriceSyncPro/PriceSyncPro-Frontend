@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'self-hosted' }
+    agent any  // Herhangi bir mevcut agent kullan
     
     environment {
         REGISTRY = 'localhost'
@@ -11,7 +11,6 @@ pipeline {
     }
     
     triggers {
-        // GitHub webhook trigger equivalent
         githubPush()
     }
     
@@ -25,9 +24,8 @@ pipeline {
         stage('Test & Build') {
             steps {
                 script {
-                    // Setup Node.js environment
+                    // Node.js version kontrolü
                     sh """
-                        # Node.js should be available on self-hosted runner
                         node --version
                         npm --version
                     """
@@ -50,9 +48,6 @@ pipeline {
         stage('Deploy to Production') {
             when {
                 branch 'main'
-            }
-            environment {
-                DEPLOY_ENV = 'production'
             }
             steps {
                 script {
@@ -109,13 +104,11 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed!'
-            // Container logs for debugging
             script {
                 sh "podman logs ${CONTAINER_NAME} --tail 50 || true"
             }
         }
         always {
-            // Clean workspace
             cleanWs()
         }
     }
