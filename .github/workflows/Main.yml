@@ -78,7 +78,7 @@ jobs:
     - name: Verify deployment
       run: |
         if curl -f http://localhost:${{ env.PORT }} > /dev/null 2>&1; then
-          echo "✅ Deployment successfull"
+          echo "✅ Deployment successful"
         else
           echo "❌ Deployment failed"
           podman logs ${{ env.CONTAINER_NAME }} --tail 20
