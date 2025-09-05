@@ -92,13 +92,13 @@ pipeline {
                     
                     // Podman kontrolü
                     try {
-                        sh 'podman --version'
-                        def podmanVersion = sh(script: 'podman --version', returnStdout: true).trim()
-                        echo "✅ Podman available: ${podmanVersion}"
+                        sh 'sudo podman --version'
+                        def podmanVersion = sh(script: 'sudo podman --version', returnStdout: true).trim()
+                        echo "✅ Podman available with root privileges: ${podmanVersion}"
                     } catch (Exception e) {
-                        echo "❌ Podman not found!"
-                        echo "Please install and configure Podman for rootless usage"
-                        error("Podman is required but not available")
+                        echo "❌ Podman not found or no sudo access!"
+                        echo "Please install Podman and configure passwordless sudo for jenkins user"
+                        error("Podman with sudo access is required")
                     }
                     
                     // Curl kontrolü ve kurulumu
@@ -146,20 +146,20 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🚀 Starting deployment..."
+                    echo "🚀 Starting deployment with root privileges..."
                     
                     echo "🏗️ Building container image..."
-                    sh "podman build -t ${IMAGE_TAG} ."
+                    sh "sudo podman build -t ${IMAGE_TAG} ."
                     
                     echo "🛑 Stopping existing container..."
                     sh """
-                        podman stop ${CONTAINER_NAME} || echo "No existing container to stop"
-                        podman rm ${CONTAINER_NAME} || echo "No existing container to remove"
+                        sudo podman stop ${CONTAINER_NAME} || echo "No existing container to stop"
+                        sudo podman rm ${CONTAINER_NAME} || echo "No existing container to remove"
                     """
                     
                     echo "▶️ Starting new container..."
                     sh """
-                        podman run -d \\
+                        sudo podman run -d \\
                           --name ${CONTAINER_NAME} \\
                           -p ${PORT}:3000 \\
                           ${IMAGE_TAG}
@@ -175,13 +175,13 @@ pipeline {
                         else
                             echo "❌ Deployment failed - Application not responding"
                             echo "Container logs:"
-                            podman logs ${CONTAINER_NAME} --tail 20
+                            sudo podman logs ${CONTAINER_NAME} --tail 20
                             exit 1
                         fi
                     """
                     
                     echo "🧹 Cleaning up old images..."
-                    sh 'podman image prune -f || echo "Image cleanup completed"'
+                    sh 'sudo podman image prune -f || echo "Image cleanup completed"'
                     
                     echo "🎉 Deployment Summary:"
                     sh """
@@ -189,8 +189,9 @@ pipeline {
                         echo "🐳 Container: ${CONTAINER_NAME}"
                         echo "🌐 URL: http://localhost:${PORT}"
                         echo "⏰ Deployed at: \$(date)"
-                        echo "🔗 Container Status:"
-                        podman ps --filter name=${CONTAINER_NAME}
+                        echo "🔗 Root Container Status:"
+                        sudo podman ps --filter name=${CONTAINER_NAME}
+                        echo "💡 Container is now visible to root user"
                     """
                 }
             }
@@ -203,6 +204,7 @@ pipeline {
             script {
                 if (env.BRANCH_NAME == 'main') {
                     echo "🌐 Application is available at: http://localhost:${PORT}"
+                    echo "🔍 Check container with: sudo podman ps"
                 }
             }
         }
@@ -213,13 +215,13 @@ pipeline {
                 
                 try {
                     def containerExists = sh(
-                        script: "podman ps -a --filter name=${env.CONTAINER_NAME} --format '{{.Names}}'",
+                        script: "sudo podman ps -a --filter name=${env.CONTAINER_NAME} --format '{{.Names}}'",
                         returnStdout: true
                     ).trim()
                     
                     if (containerExists) {
                         echo "📄 Container logs:"
-                        sh "podman logs ${env.CONTAINER_NAME} --tail 50"
+                        sh "sudo podman logs ${env.CONTAINER_NAME} --tail 50"
                     } else {
                         echo "ℹ️ No container logs available - container was not created"
                     }
