@@ -1,5 +1,5 @@
 pipeline {
-    agent any  // Herhangi bir mevcut agent kullan
+    agent any
     
     environment {
         REGISTRY = 'localhost'
@@ -24,22 +24,14 @@ pipeline {
         stage('Test & Build') {
             steps {
                 script {
-                    // Node.js version kontrolü
                     sh """
                         node --version
                         npm --version
                     """
                     
-                    // Install dependencies
                     sh 'npm ci --prefer-offline --no-audit'
-                    
-                    // Run linting (optional)
                     sh 'npm run lint --if-present || true'
-                    
-                    // Run tests (optional)
                     sh 'npm run test --if-present || true'
-                    
-                    // Build application
                     sh 'npm run build'
                 }
             }
@@ -51,16 +43,13 @@ pipeline {
             }
             steps {
                 script {
-                    // Build container image
                     sh "podman build -t ${IMAGE_TAG} ."
                     
-                    // Stop existing container
                     sh """
                         podman stop ${CONTAINER_NAME} || true
                         podman rm ${CONTAINER_NAME} || true
                     """
                     
-                    // Run new container
                     sh """
                         podman run -d \\
                           --name ${CONTAINER_NAME} \\
@@ -68,10 +57,8 @@ pipeline {
                           ${IMAGE_TAG}
                     """
                     
-                    // Wait for container startup
                     sleep(5)
                     
-                    // Verify deployment
                     sh """
                         if curl -f http://localhost:${PORT} > /dev/null 2>&1; then
                             echo "✅ Deployment successful"
@@ -82,10 +69,8 @@ pipeline {
                         fi
                     """
                     
-                    // Cleanup old resources
                     sh 'podman image prune -f || true'
                     
-                    // Deployment summary
                     sh """
                         echo "🎉 Deployment Complete:"
                         echo "📦 Image: ${IMAGE_TAG}"
@@ -105,11 +90,21 @@ pipeline {
         failure {
             echo 'Pipeline failed!'
             script {
-                sh "podman logs ${CONTAINER_NAME} --tail 50 || true"
+                try {
+                    sh "podman logs ${env.CONTAINER_NAME} --tail 50 || echo 'No container logs available'"
+                } catch (Exception e) {
+                    echo "Could not retrieve container logs: ${e.getMessage()}"
+                }
             }
         }
-        always {
-            cleanWs()
+        cleanup {
+            script {
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup failed: ${e.getMessage()}"
+                }
+            }
         }
     }
 }
