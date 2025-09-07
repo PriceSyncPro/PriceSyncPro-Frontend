@@ -31,7 +31,7 @@ const navCategories: NavCategory[] = [
     items: [
       {
         icon: <GridIcon />,
-        name: "Dashboard",
+        name: "Ana Sayfa",
         path: "/dashboard"
       },
       {

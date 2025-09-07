@@ -1,22 +1,39 @@
 import type { Metadata } from "next";
-import ContactForm from "@/components/contact/ContactForm";
-import ContactInfo from "@/components/contact/ContactInfo";
+
+// ContactForm'u lazy load edin
+import dynamic from 'next/dynamic';
+
+const ContactForm = dynamic(() => import('@/components/contact/ContactForm'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>
+});
+
+const ContactInfo = dynamic(() => import('@/components/contact/ContactInfo'), {
+  ssr: true // SSR'da gösterilmesi önemliyse
+});
 
 export const metadata: Metadata = {
   title: "İletişim - PriceSyncPro",
-  description: "PriceSyncPro ile iletişime geçin. Sorularınız için bize ulaşın, demo talep edin veya destek alın. 7/24 Türkçe müşteri hizmetleri.",
-  keywords: ["iletişim", "destek", "müşteri hizmetleri", "demo", "PriceSyncPro"],
+  description: "PriceSyncPro ile iletişime geçin. 7/24 Türkçe destek, demo talep ve sorularınız için bize ulaşın.",
+  // Gereksiz keywords'ü kaldırın (SEO'da artık etkili değil)
   openGraph: {
     title: "İletişim - PriceSyncPro",
-    description: "PriceSyncPro ile iletişime geçin. Sorularınız için bize ulaşın.",
+    description: "PriceSyncPro ile iletişime geçin. 7/24 Türkçe destek.",
     type: "website",
+    locale: "tr_TR", // Türkçe için ekleyin
   },
   twitter: {
     card: "summary",
-    title: "İletişim - PriceSyncPro",
-    description: "PriceSyncPro ile iletişime geçin. Sorularınız için bize ulaşın.",
+    title: "İletişim - PriceSyncPro", 
+    description: "PriceSyncPro ile iletişime geçin. 7/24 Türkçe destek.",
   },
+  alternates: {
+    canonical: "/contact" // Canonical URL ekleyin
+  }
 };
+
+const cardClassName = "bg-white rounded-2xl shadow-lg p-8 border border-gray-200";
+
+
 
 export default function ContactPage() {
   return (
@@ -41,7 +58,7 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Form */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+            <div className={cardClassName}>
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Mesaj Gönderin
@@ -58,7 +75,7 @@ export default function ContactPage() {
               <ContactInfo />
               
               {/* Map or Additional Info */}
-              <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+              <div className={cardClassName}>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
                   Çalışma Saatleri
                 </h3>

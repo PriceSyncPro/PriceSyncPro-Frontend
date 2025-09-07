@@ -6,7 +6,7 @@ import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import {AuthProvider} from "@/utils/contexts/AuthContext";
+import {AuthProvider} from "@/context/AuthContext";
 import type { Metadata } from "next";
 
 const outfit = Outfit({

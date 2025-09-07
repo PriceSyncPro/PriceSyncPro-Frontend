@@ -75,7 +75,7 @@ axiosInstance.interceptors.response.use(
 
         // Network hatası kontrolü
         if (!error.response) {
-            console.error('Network error:', error.message);
+            console.error('Bağlantı Hatası!', error.message);
         }
 
         return Promise.reject(error);

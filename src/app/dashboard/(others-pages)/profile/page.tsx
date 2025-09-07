@@ -2,7 +2,7 @@
 import UserInfoCard from "@/components/user-profile/UserInfoCard";
 import UserMetaCard from "@/components/user-profile/UserMetaCard";
 import UserSellerInfoCard from "@/components/user-profile/UserSellerInfoCard";
-import { useAuth } from "@/utils/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { UserMarketplacesService } from "@/utils/api/services";
 import { UserMarketplace } from "@/utils/types/userMarketplaces";
 import React, { useState, useEffect } from "react";

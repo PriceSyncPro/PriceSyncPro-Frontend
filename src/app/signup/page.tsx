@@ -1,5 +1,4 @@
 import SignUpForm from "@/components/auth/SignUpForm";
-import AuthGuard from "@/utils/components/AuthGuard";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,8 +8,6 @@ export const metadata: Metadata = {
 
 export default function SignUp() {
   return (
-    <AuthGuard requireAuth={false} redirectTo="/dashboard">
       <SignUpForm />
-    </AuthGuard>
   );
 }
