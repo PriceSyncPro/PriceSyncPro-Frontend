@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import ProductsPage from "@/components/products/ProductsPage";
-import { Pagination, Product, Statistic } from "@/utils/types/Product";
+import { Pagination, Product, Statistic } from "@/utils/types/Products";
 import { ProductService } from "@/utils/api/services/productService";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";

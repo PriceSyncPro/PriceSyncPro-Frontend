@@ -89,7 +89,7 @@ export default function Homepage() {
             <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
               Gelişmiş analitik araçları ile rakiplerinizi takip edin, 
               fiyat stratejilerinizi optimize edin ve satışlarınızı 
-              <strong className="text-gray-900"> %35'e kadar artırın</strong>.
+              <strong className="text-gray-900"> %35&apos;e kadar artırın</strong>.
             </p>
 
             {/* CTA Buttons */}

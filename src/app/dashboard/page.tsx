@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
+// import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { QuickStart } from "@/components/dashboard/QuickStart";
 import React from "react";
-
 export const metadata: Metadata = {
   title: "Dashboard | PriceSyncPro - Fiyat Takip ve Analiz Platformu",
   description: "PriceSyncPro ile ürün fiyatlarınızı takip edin, analiz edin ve rekabet avantajı elde edin. Gelişmiş dashboard ile tüm verilerinizi tek yerden yönetin.",
 };
+
 
 export default function Dashboard() {
   return (
@@ -21,7 +21,6 @@ export default function Dashboard() {
       Rekabet avantajınızı koruyacak güçlü özellikler
     </p>
   </div>
-  
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
     <div className="text-center p-3">
       <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mx-auto mb-3">

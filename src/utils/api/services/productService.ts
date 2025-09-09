@@ -1,6 +1,6 @@
 import axios from '@/utils/axios';
 import { API_ENDPOINTS } from '@/utils/api/endpoints';
-import {ApiResponse, SingleApiResponse, createProduct, Pagination, Product, Statistic} from '@/utils/types/Product';
+import {ApiResponse, SingleApiResponse, createProduct, Pagination, Product, Statistic} from '@/utils/types/Products';
 
 
 interface ApiResponseData<T> {

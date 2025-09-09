@@ -64,3 +64,17 @@ export interface SingleApiResponse<T> {
     isSuccessful: boolean;
     statusCode: number;
 }
+
+export interface BaseStatusInfo {
+  borderColor: string;
+  cardBg: string;
+  iconBg: string;
+  iconColor: string;
+  className: string;
+  icon: React.ReactNode;
+}
+
+export interface DesktopStatusInfo extends BaseStatusInfo {
+  bgColor: string;
+}
+
