@@ -1,8 +1,12 @@
 
+// Local Product interface for AddProduct component (temporary ID)
 export interface Product {
     id: number;
     name: string;
 }
+
+// Also export as AddProductItem for clarity
+export type AddProductItem = Product;
 
 
 

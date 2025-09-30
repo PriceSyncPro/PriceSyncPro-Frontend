@@ -1,5 +1,5 @@
 // components/form/input/InputWithIcon.tsx
-import { memo, ReactNode, useCallback } from 'react';
+import { memo, ReactNode } from 'react';
 import Input from '../input/InputField';
 
 interface InputWithIconProps {

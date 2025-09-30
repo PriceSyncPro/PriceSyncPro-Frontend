@@ -38,7 +38,7 @@ export default function SignInForm() {
     }
   };
 
-  const { isValid, errors } = useFormValidation(formData, validationRules);
+  const { isValid } = useFormValidation(formData, validationRules);
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -106,7 +106,7 @@ export default function SignInForm() {
               Giriş Başarılı!
             </h1>
             <p className="text-gray-600 font-medium mb-4">
-              Dashboard'a yönlendiriliyorsunuz...
+              Dashboard`&apos;`a yönlendiriliyorsunuz...
             </p>
             <div className="flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>

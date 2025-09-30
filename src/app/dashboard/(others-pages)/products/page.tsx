@@ -1,91 +1,209 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import ProductsPage from "@/components/products/ProductsPage";
-import { Pagination, Product, Statistic } from "@/utils/types/Products";
+import { Product } from "@/utils/types/Products";
+import type { Pagination, Statistic } from "@/utils/types/Products";
 import { ProductService } from "@/utils/api/services/productService";
+import { getProductStatusFromTab } from "@/utils/helpers/productHelpers";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
-export default function Products() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const [pagination, setPagination] = useState<Pagination | null>(null);
-    const [statistic, setStatistic] = useState<Statistic | null>(null);
-    const [currentTab, setCurrentTab] = useState<string>("all");
-    // İçeriğin fade-in animasyonu için state
-    const [animateClass, setAnimateClass] = useState("opacity-0 translate-y-4");
-    // URL'den sayfa numarasını al veya varsayılan olarak 1 kullan
-    const currentPage = Number(searchParams.get("page") || 1);
 
-    // Tab key'ine göre productStatus değerini belirle
-    const getProductStatusFromTab = (tabKey: string): number | undefined => {
-        switch (tabKey) {
-            case "approved": return 5;
-            case "awaiting": return 4;
-            case "pending": return 3;
-            case "rejected": return 1;
-            case "error": return 2;
-            case "inactive": return 0;
-            case "all":
-            default:
-                return undefined; // Tümü için productStatus gönderilmez
+// Data structure for cached products
+interface ProductsData {
+    products: Product[];
+    pagination: Pagination | null;
+    statistic: Statistic | null;
+    error: string | null;
+}
+
+// Suspense-compatible data fetcher
+class ProductsDataFetcher {
+    private static cache = new Map<string, ProductsData>();
+    private static promises = new Map<string, Promise<ProductsData>>();
+    private static globalStatistic: Statistic | null = null; // Global statistic storage
+
+    static fetchProducts(pageNumber: number = 1, tabKey: string = "all") {
+        const cacheKey = `${pageNumber}-${tabKey}`;
+        
+        // Return cached data if available
+        if (this.cache.has(cacheKey)) {
+            const cachedData = this.cache.get(cacheKey)!;
+            // Use global statistic if available and current data doesn't have complete statistic
+            if (this.globalStatistic && (!cachedData.statistic || cachedData.statistic.totalCount === 0)) {
+                return {
+                    ...cachedData,
+                    statistic: this.globalStatistic
+                };
+            }
+            return cachedData;
         }
-    };
 
-    const fetchProducts = async (pageNumber: number = 1, tabKey: string = currentTab) => {
-        setLoading(true);
+        // Return existing promise if already fetching
+        if (this.promises.has(cacheKey)) {
+            throw this.promises.get(cacheKey);
+        }
+
+        // Create new promise and throw it (Suspense pattern)
+        const promise = this.fetchData(pageNumber, tabKey, cacheKey);
+        this.promises.set(cacheKey, promise);
+        throw promise;
+    }
+
+    private static async fetchData(pageNumber: number, tabKey: string, cacheKey: string) {
         try {
             const productStatus = getProductStatusFromTab(tabKey);
             const response = await ProductService.getAll(pageNumber, 10, productStatus);
+            
+            let result;
             if (response.isSuccessful && response.data && response.data.items) {
-                setProducts(response.data.items as unknown as Product[]);
-                if (response.data.metadata?.pagination) {
-                    setPagination(response.data.metadata.pagination);
-                }
-                if (response.data.metadata?.statistic) {
-                    setStatistic(response.data.metadata.statistic);
-                }
-                setError(null);
-            } else {
-                const errorMessage =
-                    response.errorMessages?.[0] || "Ürünler yüklenirken bir hata oluştu";
+                const statistic = response.data.metadata?.statistic || null;
                 
-                // Eğer 404 hatası ise (herhangi bir tab için), boş ürün listesi göster
+                // Store global statistic from "all" tab or if we don't have one yet
+                if ((tabKey === "all" || !this.globalStatistic) && statistic && statistic.totalCount > 0) {
+                    this.globalStatistic = statistic;
+                }
+                
+                result = {
+                    products: response.data.items as unknown as Product[],
+                    pagination: response.data.metadata?.pagination || null,
+                    statistic: this.globalStatistic || statistic, // Use global statistic if available
+                    error: null
+                };
+            } else {
+                const errorMessage = response.errorMessages?.[0] || "Ürünler yüklenirken bir hata oluştu";
+                
                 if (response.statusCode === 404) {
-                    setProducts([]);
-                    setError(null);
-                    setPagination(null);
-                    // Statistic'i sıfırlama, önceki değeri koru
+                    result = {
+                        products: [],
+                        pagination: null,
+                        statistic: this.globalStatistic, // Use global statistic even for empty results
+                        error: null
+                    };
                 } else {
-                    // Sadece gerçek hatalar için error state'i set et
-                    setError(errorMessage);
+                    result = {
+                        products: [],
+                        pagination: null,
+                        statistic: this.globalStatistic, // Use global statistic for errors too
+                        error: errorMessage
+                    };
                     toast.error(errorMessage);
                 }
             }
+
+            // Cache the result
+            this.cache.set(cacheKey, result);
+            this.promises.delete(cacheKey);
+            return result;
         } catch (err) {
             console.error("Ürünler yüklenirken hata:", err);
-            // Network hataları vs. için error state'i set et
-            setError("Ürünler yüklenirken bir hata oluştu");
+            const errorResult = {
+                products: [],
+                pagination: null,
+                statistic: this.globalStatistic, // Use global statistic for network errors
+                error: "Ürünler yüklenirken bir hata oluştu"
+            };
+            
+            this.cache.set(cacheKey, errorResult);
+            this.promises.delete(cacheKey);
             toast.error("Ürünler yüklenirken bir hata oluştu");
-        } finally {
-            setLoading(false);
+            return errorResult;
         }
+    }
+
+    static clearCache() {
+        this.cache.clear();
+        this.promises.clear();
+        this.globalStatistic = null; // Clear global statistic too
+    }
+
+    static invalidateCache(cacheKey?: string) {
+        if (cacheKey) {
+            this.cache.delete(cacheKey);
+            this.promises.delete(cacheKey);
+        } else {
+            this.clearCache();
+        }
+    }
+
+    static refreshGlobalStatistic() {
+        // Force refresh global statistic by fetching "all" tab
+        this.invalidateCache("1-all");
+        this.globalStatistic = null;
+    }
+
+    static updateCachedProducts(cacheKey: string, newProducts: Product[]) {
+        const currentData = this.cache.get(cacheKey);
+        if (currentData) {
+            this.cache.set(cacheKey, {
+                ...currentData,
+                products: newProducts
+            });
+        }
+    }
+}
+
+// Hook that uses Suspense data fetcher
+function useProductsData(currentPage: number, currentTab: string) {
+    const data = ProductsDataFetcher.fetchProducts(currentPage, currentTab);
+    
+    const refreshData = useCallback(() => {
+        ProductsDataFetcher.invalidateCache(`${currentPage}-${currentTab}`);
+    }, [currentPage, currentTab]);
+
+    const updateProducts = useCallback((newProducts: Product[]) => {
+        const cacheKey = `${currentPage}-${currentTab}`;
+        ProductsDataFetcher.updateCachedProducts(cacheKey, newProducts);
+    }, [currentPage, currentTab]);
+
+    return {
+        ...data,
+        refreshData,
+        updateProducts
     };
+}
+
+// Main Products Component
+function ProductsContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [currentTab, setCurrentTab] = useState<string>("all");
+    const [animateClass, setAnimateClass] = useState("opacity-0 translate-y-4");
+    const currentPage = Number(searchParams.get("page") || 1);
+
+    // Loading state'i track etmek için
+    const [isDataLoading, setIsDataLoading] = useState(false);
+    
+    // Suspense ile data fetch etmeye çalış, loading state'i yakala
+    let products, pagination, statistic, error, refreshData, updateProducts;
+    try {
+        const data = useProductsData(currentPage, currentTab);
+        products = data.products;
+        pagination = data.pagination;
+        statistic = data.statistic;
+        error = data.error;
+        refreshData = data.refreshData;
+        updateProducts = data.updateProducts;
+    } catch (promise) {
+        // Promise throw edildiğinde loading state'i set et
+        if (promise instanceof Promise) {
+            setIsDataLoading(true);
+            promise.finally(() => setIsDataLoading(false));
+        }
+        throw promise; // Suspense için promise'i tekrar throw et
+    }
+
+    // Helper function is now imported at the top
+
 
     const handlePageChange = (newPage: number) => {
         router.push(`?page=${newPage}`);
     };
 
-    useEffect(() => {
-        fetchProducts(currentPage);
-    }, [currentPage]);
+    // No useEffect needed - Suspense handles data fetching automatically
 
-    // Sayfa yüklendiğinde fade-in animasyonu için class bilgisini güncelle
     useEffect(() => {
         const timer = setTimeout(() => {
             setAnimateClass("opacity-100 translate-y-0 transition-all duration-700");
@@ -97,12 +215,17 @@ export default function Products() {
         try {
             const response = await ProductService.delete(id);
             if (response.isSuccessful) {
-                setProducts(products.filter((product) => product.id !== id));
+                const filteredProducts = products?.filter((product: Product) => product.id !== id) || [];
+                updateProducts(filteredProducts);
                 toast.success("Ürün başarıyla silindi");
-                if (products.length === 1 && pagination && pagination.currentPage > 1) {
+                
+                // Refresh global statistic after deletion
+                ProductsDataFetcher.refreshGlobalStatistic();
+                
+                if (filteredProducts.length === 0 && pagination && pagination.currentPage > 1) {
                     handlePageChange(pagination.currentPage - 1);
                 } else {
-                    fetchProducts(currentPage);
+                    refreshData();
                 }
             } else {
                 const errorMessage = response.errorMessages?.[0] || "Ürün silinirken bir hata oluştu";
@@ -118,10 +241,12 @@ export default function Products() {
         try {
             const response = await ProductService.update(product.id, { productStatus: 5 });
             if (response.isSuccessful) {
-                setProducts(
-                    products.map((p) => (p.id === product.id ? { ...p, productStatus: 5 } : p))
-                );
+                const updatedProducts = products?.map((p: Product) => (p.id === product.id ? { ...p, productStatus: 5 } : p)) || [];
+                updateProducts(updatedProducts);
                 toast.success("Ürün başarıyla onaylandı");
+                
+                // Refresh global statistic after approval
+                ProductsDataFetcher.refreshGlobalStatistic();
             } else {
                 const errorMessage = response.errorMessages?.[0] || "Ürün onaylanırken bir hata oluştu";
                 toast.error(errorMessage);
@@ -145,47 +270,13 @@ export default function Products() {
         setCurrentTab(tabKey);
         // URL'den page parametresini kaldır ve yeni tab için ilk sayfadan başla
         router.push(window.location.pathname);
-        fetchProducts(1, tabKey); // Yeni tab için ilk sayfadan başla
+        // Suspense otomatik olarak yeni data'yı fetch edecek
     };
 
     // Destek butonunun tıklama işlemi için örnek yönlendirme
     const handleSupport = () => {
         router.push("/support");
     };
-
-    // Yüklenme ekranı: ComponentCard içinde orta nokta, ekranın tamamını kaplamaz
-    if (loading) {
-        return (
-            <ComponentCard title="Ürünlerim">
-                <div className={`flex flex-col items-center justify-center py-12 ${animateClass}`}>
-                    <div className="mb-4">
-                        <svg
-                            className="w-16 h-16 text-indigo-500 dark:text-indigo-400 animate-spin"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                            />
-                            <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                            />
-                        </svg>
-                    </div>
-                    <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">Yükleniyor...</p>
-                </div>
-            </ComponentCard>
-        );
-    }
 
     // Sadece gerçek network hataları için hata ekranı göster, 404 değil
     if (error && error !== "Ürün bulunamadı.") {
@@ -221,7 +312,7 @@ export default function Products() {
                     <p className="text-base text-gray-700 dark:text-gray-300 text-center">{error}</p>
                     <div className="flex flex-wrap justify-center gap-4">
                         <button
-                            onClick={() => fetchProducts(currentPage)}
+                            onClick={refreshData}
                             className="flex items-center mt-2 px-4 py-2 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-md shadow-md dark:shadow-gray-800/20 transition"
                         >
                             <svg
@@ -271,7 +362,7 @@ export default function Products() {
     return (
         <div className={animateClass}>
             <ProductsPage
-                products={products}
+                products={products || []}
                 onDelete={handleDeleteProduct}
                 onEdit={handleEditProduct}
                 onAdd={handleAddProduct}
@@ -281,7 +372,24 @@ export default function Products() {
                 onTabChange={handleTabChange}
                 activeTab={currentTab}
                 statistic={statistic}
+                isLoading={isDataLoading}
             />
         </div>
     );
+}
+
+// Wrapper component for layout - Suspense sadece data fetch için
+function ProductsWithLayout() {
+    return (
+        <div className="opacity-100 translate-y-0 transition-all duration-700">
+            <Suspense fallback={<div />}>
+                <ProductsContent />
+            </Suspense>
+        </div>
+    );
+}
+
+// Main wrapper component
+export default function Products() {
+    return <ProductsWithLayout />;
 }

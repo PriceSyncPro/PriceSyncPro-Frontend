@@ -1,6 +1,6 @@
 interface Feature {
-    title:String,
-    description:String
+    title: string,
+    description: string
 }
 
 export default function FeaturesSection() {

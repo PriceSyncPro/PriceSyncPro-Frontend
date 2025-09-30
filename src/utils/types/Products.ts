@@ -1,10 +1,16 @@
 
-// Product interface tanımı
-export interface Product {
-    name: string;
-    remoteName: string | null;
-    remoteUrl: string | null;
-    productStatus: number;
+// Product Status Enum
+export enum ProductStatus {
+    INACTIVE = 0,
+    REJECTED = 1,
+    ERROR = 2,
+    PENDING = 3,
+    AWAITING_APPROVAL = 4,
+    APPROVED = 5
+}
+
+// Base Entity interface
+export interface BaseEntity {
     id: string;
     isActive: boolean;
     createAt: string;
@@ -13,6 +19,14 @@ export interface Product {
     updateUserName: string | null;
     isDeleted: boolean;
     deleteAt: string | null;
+}
+
+// Product interface tanımı
+export interface Product extends BaseEntity {
+    name: string;
+    remoteName: string | null;
+    remoteUrl: string | null;
+    productStatus: ProductStatus;
 }
 
 export interface Pagination {
@@ -34,10 +48,29 @@ export interface Statistic {
     approvedCount: number;
 }
 
-export interface createProduct{
-    products: {
+// Create Product Request
+export interface CreateProductRequest {
+    products: Array<{
         name: string;
-    }[];
+    }>;
+}
+
+// Update Product Request
+export type UpdateProductRequest = Partial<Omit<Product, 'id' | 'createAt' | 'createUserName'>>;
+
+// Product Filter Options
+export interface ProductFilterOptions {
+    status?: ProductStatus;
+    isActive?: boolean;
+    searchQuery?: string;
+    dateFrom?: string;
+    dateTo?: string;
+}
+
+// Product Sort Options
+export interface ProductSortOptions {
+    field: keyof Product;
+    direction: 'asc' | 'desc';
 }
 
 export interface ProductResponse {
@@ -45,24 +78,27 @@ export interface ProductResponse {
     value: Product[];
 }
 
-export interface ApiResponse<T> {
-    data: {
-        items: T[]; // T[] olarak tanımlandı, yani bir dizi T
-        metadata: {
-            pagination?: Pagination;
-            statistic?: Statistic;
-        };
-    };
+// Base API Response
+interface BaseApiResponse {
     errorMessages: string[] | null;
     isSuccessful: boolean;
     statusCode: number;
 }
 
-export interface SingleApiResponse<T> {
+// List API Response
+export interface ApiResponse<T> extends BaseApiResponse {
+    data: {
+        items: T[];
+        metadata: {
+            pagination?: Pagination;
+            statistic?: Statistic;
+        };
+    };
+}
+
+// Single Item API Response
+export interface SingleApiResponse<T> extends BaseApiResponse {
     data: T;
-    errorMessages: string[] | null;
-    isSuccessful: boolean;
-    statusCode: number;
 }
 
 export interface BaseStatusInfo {

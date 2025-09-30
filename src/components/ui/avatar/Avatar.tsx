@@ -1,5 +1,6 @@
 // components/ui/Avatar.tsx
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface AvatarProps {
   name: string;
@@ -42,29 +43,26 @@ export default function Avatar({ name, src, size = 'md', className = '' }: Avata
   // İsmin ilk harfini al
   const initial = name ? name.charAt(0).toUpperCase() : '?';
 
-  // Eğer src varsa resmi göster, yoksa initial'ı göster
-  if (src) {
+  const [imageError, setImageError] = useState(false);
+
+  // Eğer src varsa ve resim yüklenebilirse resmi göster, yoksa initial'ı göster
+  if (src && !imageError) {
+    const sizeMap = {
+      sm: 32,
+      md: 44,
+      lg: 64
+    };
+    
     return (
       <div className={`overflow-hidden rounded-full ${sizeClasses[size]} ${className}`}>
-        <img
+        <Image
           src={src}
           alt={name}
+          width={sizeMap[size]}
+          height={sizeMap[size]}
           className="h-full w-full object-cover"
-          onError={(e) => {
-            // Resim yüklenemezse fallback olarak initial'ı göster
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            if (target.nextSibling) {
-              (target.nextSibling as HTMLElement).style.display = 'flex';
-            }
-          }}
+          onError={() => setImageError(true)}
         />
-        <div
-          className={`h-full w-full flex items-center justify-center ${bgColor} text-white font-bold`}
-          style={{ display: 'none' }}
-        >
-          {initial}
-        </div>
       </div>
     );
   }

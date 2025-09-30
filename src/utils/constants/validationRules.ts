@@ -1,5 +1,4 @@
 // utils/validationRules.ts
-import { ValidationRules } from '@/hooks/useFormValidation';
 
 // Yaygın kullanılan validation kuralları
 export const commonValidations = {

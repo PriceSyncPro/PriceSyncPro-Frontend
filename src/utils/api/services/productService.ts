@@ -1,7 +1,6 @@
 import axios from '@/utils/axios';
 import { API_ENDPOINTS } from '@/utils/api/endpoints';
-import {ApiResponse, SingleApiResponse, createProduct, Pagination, Product, Statistic} from '@/utils/types/Products';
-
+import {ApiResponse, SingleApiResponse, CreateProductRequest, UpdateProductRequest, Pagination, Product, Statistic} from '@/utils/types/Products';
 
 interface ApiResponseData<T> {
     items: T[];
@@ -11,48 +10,82 @@ interface ApiResponseData<T> {
     };
 }
 
+// Sabit değerler
+const EMPTY_PRODUCT: Product = {
+    id: "",
+    name: "",
+    remoteName: null,
+    remoteUrl: null,
+    productStatus: 0,
+    isActive: false,
+    createAt: "",
+    createUserName: "",
+    updateAt: null,
+    updateUserName: null,
+    isDeleted: false,
+    deleteAt: null
+};
+
+const EMPTY_PRODUCTS_RESPONSE: ApiResponseData<Product> = {
+    items: [],
+    metadata: {}
+};
+
+// Hata yönetimi utility fonksiyonu
+const handleApiError = <T>(error: unknown, defaultData: T, defaultMessage: string): ApiResponse<T> | SingleApiResponse<T> => {
+    // Axios hatası kontrolü
+    if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: ApiResponse<T> | SingleApiResponse<T>; status?: number } };
+        if (axiosError.response?.data) {
+            return axiosError.response.data;
+        }
+    }
+    
+    const errorMessage = error && typeof error === 'object' && 'message' in error 
+        ? (error as { message: string }).message 
+        : defaultMessage;
+    
+    const statusCode = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { status?: number } }).response?.status || 500
+        : 500;
+    
+    return {
+        data: defaultData,
+        errorMessages: [errorMessage],
+        isSuccessful: false,
+        statusCode
+    } as ApiResponse<T> | SingleApiResponse<T>;
+};
+
 export class ProductService {
     /**
      * Tüm ürünleri getir
      */
-    static async getAll(pageNumber: number = 1, pageSize: number = 10, productStatus?: number): Promise<ApiResponse<ApiResponseData<Product>>> {
+    static async getAll(
+        pageNumber: number = 1, 
+        pageSize: number = 10, 
+        productStatus?: number
+    ): Promise<ApiResponse<ApiResponseData<Product>>> {
         try {
-            let url = `${API_ENDPOINTS.PRODUCTS.GET_ALL}?PageNumber=${pageNumber}&PageSize=${pageSize}`;
+            const params = new URLSearchParams({
+                PageNumber: pageNumber.toString(),
+                PageSize: pageSize.toString()
+            });
             
             if (productStatus !== undefined) {
-                url += `&ProductStatus=${productStatus}`;
+                params.append('ProductStatus', productStatus.toString());
             }
             
+            const url = `${API_ENDPOINTS.PRODUCTS.GET_ALL}?${params.toString()}`;
             const response = await axios.get<ApiResponse<ApiResponseData<Product>>>(url);
-            console.log(response)
+            
             return response.data;
         } catch (error: unknown) {
-            // Axios hatası durumunda, API yanıt formatına uygun bir hata nesnesi döndür
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: ApiResponse<ApiResponseData<Product>>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
-            
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürünler getirilirken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-            
-            // API yanıt formatına uygun bir hata nesnesi oluştur
-            return {
-                data: {
-                    items: [],
-                    metadata: {}
-                },
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            return handleApiError(
+                error, 
+                EMPTY_PRODUCTS_RESPONSE, 
+                'Ürünler getirilirken bir hata oluştu'
+            ) as ApiResponse<ApiResponseData<Product>>;
         }
     }
 
@@ -66,50 +99,18 @@ export class ProductService {
             );
             return response.data;
         } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: SingleApiResponse<Product>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
-            
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürün getirilirken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-            
-            // Boş bir Product nesnesi
-            const emptyProduct: Product = {
-                id: "",
-                name: "",
-                remoteName: null,
-                remoteUrl: null,
-                productStatus: 0,
-                isActive: false,
-                createAt: "",
-                createUserName: "",
-                updateAt: null,
-                updateUserName: null,
-                isDeleted: false,
-                deleteAt: null
-            };
-            
-            return {
-                data: emptyProduct,
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            return handleApiError(
+                error, 
+                EMPTY_PRODUCT, 
+                'Ürün getirilirken bir hata oluştu'
+            ) as SingleApiResponse<Product>;
         }
     }
 
     /**
      * Yeni ürün oluştur
      */
-    static async create(productData: createProduct): Promise<SingleApiResponse<Product>> {
+    static async create(productData: CreateProductRequest): Promise<SingleApiResponse<Product>> {
         try {
             const response = await axios.post<SingleApiResponse<Product>>(
                 API_ENDPOINTS.PRODUCTS.CREATE,
@@ -117,50 +118,18 @@ export class ProductService {
             );
             return response.data;
         } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: SingleApiResponse<Product>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
-            
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürün oluşturulurken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-            
-            // Boş bir Product nesnesi
-            const emptyProduct: Product = {
-                id: "",
-                name: "",
-                remoteName: null,
-                remoteUrl: null,
-                productStatus: 0,
-                isActive: false,
-                createAt: "",
-                createUserName: "",
-                updateAt: null,
-                updateUserName: null,
-                isDeleted: false,
-                deleteAt: null
-            };
-            
-            return {
-                data: emptyProduct,
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            return handleApiError(
+                error, 
+                EMPTY_PRODUCT, 
+                'Ürün oluşturulurken bir hata oluştu'
+            ) as SingleApiResponse<Product>;
         }
     }
 
     /**
      * Ürün güncelle
      */
-    static async update(id: string, product: Partial<Product>): Promise<SingleApiResponse<Product>> {
+    static async update(id: string, product: UpdateProductRequest): Promise<SingleApiResponse<Product>> {
         try {
             const response = await axios.put<SingleApiResponse<Product>>(
                 `${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
@@ -168,43 +137,11 @@ export class ProductService {
             );
             return response.data;
         } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: SingleApiResponse<Product>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
-            
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürün güncellenirken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-
-            // Boş bir Product nesnesi
-            const emptyProduct: Product = {
-                id: "",
-                name: "",
-                remoteName: null,
-                remoteUrl: null,
-                productStatus: 0,
-                isActive: false,
-                createAt: "",
-                createUserName: "",
-                updateAt: null,
-                updateUserName: null,
-                isDeleted: false,
-                deleteAt: null
-            };
-
-            return {
-                data: emptyProduct,
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            return handleApiError(
+                error, 
+                EMPTY_PRODUCT, 
+                'Ürün güncellenirken bir hata oluştu'
+            ) as SingleApiResponse<Product>;
         }
     }
 
@@ -218,27 +155,11 @@ export class ProductService {
             );
             return response.data;
         } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: SingleApiResponse<boolean>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
-            
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürün silinirken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-            
-            return {
-                data: false,
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            return handleApiError(
+                error, 
+                false, 
+                'Ürün silinirken bir hata oluştu'
+            ) as SingleApiResponse<boolean>;
         }
     }
 
@@ -246,36 +167,56 @@ export class ProductService {
      * Duruma göre ürünleri getir
      */
     static async getByStatus(status: number): Promise<ApiResponse<ApiResponseData<Product>>> {
+        return this.getAll(1, 10, status);
+    }
+
+    /**
+     * Toplu ürün işlemleri
+     */
+    static async bulkUpdate(
+        productIds: string[], 
+        updates: UpdateProductRequest
+    ): Promise<SingleApiResponse<boolean>> {
         try {
-            const response = await axios.get<ApiResponse<ApiResponseData<Product>>>(
-                `${API_ENDPOINTS.PRODUCTS.GET_ALL}?productStatus=${status}`
+            const response = await axios.put<SingleApiResponse<boolean>>(
+                `${API_ENDPOINTS.PRODUCTS.UPDATE}/bulk`,
+                { productIds, updates }
             );
             return response.data;
         } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { data?: ApiResponse<ApiResponseData<Product>>; status?: number } };
-                if (axiosError.response?.data) {
-                    return axiosError.response.data;
-                }
-            }
+            return handleApiError(
+                error, 
+                false, 
+                'Toplu güncelleme sırasında bir hata oluştu'
+            ) as SingleApiResponse<boolean>;
+        }
+    }
+
+    /**
+     * Ürün arama
+     */
+    static async search(
+        query: string, 
+        pageNumber: number = 1, 
+        pageSize: number = 10
+    ): Promise<ApiResponse<ApiResponseData<Product>>> {
+        try {
+            const params = new URLSearchParams({
+                q: query,
+                PageNumber: pageNumber.toString(),
+                PageSize: pageSize.toString()
+            });
             
-            const errorMessage = error && typeof error === 'object' && 'message' in error 
-                ? (error as { message: string }).message 
-                : 'Ürünler getirilirken bir hata oluştu';
-            
-            const statusCode = error && typeof error === 'object' && 'response' in error
-                ? (error as { response?: { status?: number } }).response?.status || 500
-                : 500;
-            
-            return {
-                data: {
-                    items: [],
-                    metadata: {}
-                },
-                errorMessages: [errorMessage],
-                isSuccessful: false,
-                statusCode
-            };
+            const response = await axios.get<ApiResponse<ApiResponseData<Product>>>(
+                `${API_ENDPOINTS.PRODUCTS.GET_ALL}/search?${params.toString()}`
+            );
+            return response.data;
+        } catch (error: unknown) {
+            return handleApiError(
+                error, 
+                EMPTY_PRODUCTS_RESPONSE, 
+                'Ürün arama sırasında bir hata oluştu'
+            ) as ApiResponse<ApiResponseData<Product>>;
         }
     }
 }

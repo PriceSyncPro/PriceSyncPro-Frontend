@@ -1,8 +1,8 @@
 interface Testimonial {
-    name:String,
-    title:String,
-    company:String,
-    comment:String
+    name: string,
+    title: string,
+    company: string,
+    comment: string
 }
 
 
@@ -44,7 +44,7 @@ export default function TestimonialsSection() {
           {testimonials.map((testimonial, i) => (
             <div key={i} className="bg-white p-6 rounded-lg shadow-sm">
               <p className="text-gray-700 mb-4 italic">
-                "{testimonial.comment}"
+                &ldquo;{testimonial.comment}&rdquo;
               </p>
               <div>
                 <div className="font-bold text-gray-900">{testimonial.name}</div>

@@ -1,7 +1,7 @@
 // hooks/useFormValidation.ts
 import { useState, useCallback, useMemo } from 'react';
 
-export interface ValidationRules<T extends Record<string, string> = Record<string, string>> {
+export interface ValidationRules {
   [key: string]: {
     required?: boolean;
     minLength?: number;

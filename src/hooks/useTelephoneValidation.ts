@@ -1,5 +1,5 @@
 // hooks/usePhoneValidation.ts
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 
 export const usePhoneValidation = () => {
   // Kullanıcı için görsel formatlama

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 interface AnimatedNotificationProps {
   isVisible: boolean;
@@ -23,6 +23,14 @@ export default function AnimatedNotification({
   const [show, setShow] = useState(false);
   const [animate, setAnimate] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setAnimate(false);
+    setTimeout(() => {
+      setShow(false);
+      onClose();
+    }, 300);
+  }, [onClose]);
+
   useEffect(() => {
     if (isVisible) {
       setShow(true);
@@ -36,15 +44,7 @@ export default function AnimatedNotification({
         return () => clearTimeout(timer);
       }
     }
-  }, [isVisible, autoClose, duration]);
-
-  const handleClose = () => {
-    setAnimate(false);
-    setTimeout(() => {
-      setShow(false);
-      onClose();
-    }, 300);
-  };
+  }, [isVisible, autoClose, duration, handleClose]);
 
   if (!show) return null;
 
