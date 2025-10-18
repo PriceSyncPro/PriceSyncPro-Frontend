@@ -58,7 +58,7 @@ class ProductsDataFetcher {
             const response = await ProductService.getAll(pageNumber, 10, productStatus);
             
             let result;
-            if (response.isSuccessful && response.data && response.data.items) {
+            if (response.isSuccessful && response.data.items) {
                 const statistic = response.data.metadata?.statistic || null;
                 
                 // Store global statistic from "all" tab or if we don't have one yet
@@ -212,6 +212,51 @@ function ProductsContent() {
     }, []);
 
     const handleDeleteProduct = async (id: string) => {
+        // Toast ile onay mesajı göster
+        toast.custom(
+            (t) => (
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-lg max-w-md">
+                    <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                Ürünü Sil
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                        <button
+                            onClick={async () => {
+                                toast.dismiss(t);
+                                await performDelete(id);
+                            }}
+                            className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                            Sil
+                        </button>
+                        <button
+                            onClick={() => toast.dismiss(t)}
+                            className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                            İptal
+                        </button>
+                    </div>
+                </div>
+            ),
+            {
+                duration: Infinity, // Manuel olarak kapatılana kadar açık kalsın
+            }
+        );
+    };
+
+    const performDelete = async (id: string) => {
         try {
             const response = await ProductService.delete(id);
             if (response.isSuccessful) {
@@ -258,7 +303,7 @@ function ProductsContent() {
     };
 
     const handleAddProduct = () => {
-        router.push("/product/add");
+        router.push("/dashboard/add-product");
     };
 
     const handleEditProduct = (product: Product) => {

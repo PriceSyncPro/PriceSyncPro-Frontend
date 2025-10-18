@@ -179,16 +179,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return false;
             }
             
-            const { accessToken } = response.data || {};
-            if (!accessToken) {
+            const { token } = response.data || {};
+            if (!token) {
                 setError('Token alınamadı');
                 return false;
             }
             
-            localStorage.setItem('token', accessToken);
+            localStorage.setItem('token', token);
             
             try {
-                const decoded = jwtDecode<{ exp: number }>(accessToken);
+                const decoded = jwtDecode<{ exp: number }>(token);
                 const userProfile = await UserService.getProfile();
                 
                 setUser({

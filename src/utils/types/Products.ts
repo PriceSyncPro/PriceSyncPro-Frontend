@@ -50,9 +50,7 @@ export interface Statistic {
 
 // Create Product Request
 export interface CreateProductRequest {
-    products: Array<{
-        name: string;
-    }>;
+    products: string[];
 }
 
 // Update Product Request
