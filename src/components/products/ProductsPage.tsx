@@ -218,16 +218,16 @@ const ProductsPage = memo(function ProductsPage({
         );
     });
 
-    // Memoized tab data - API'den gelen statistic verilerini kullan
+    // Memoized tab data - Önce statistic verilerini kullan, yoksa 0 göster
     const tabData = useMemo(() => [
-        { key: "all", label: "Tümü", count: statistic?.totalCount || products.length },
-        { key: "approved", label: "Onaylı", count: statistic?.approvedCount || approvedProducts.length },
-        { key: "awaiting", label: isMobile ? "Onay Bek." : "Onay Bekleyen", count: statistic?.awaitingApprovalCount || awaitingApprovalProducts.length },
-        { key: "pending", label: "Beklemede", count: statistic?.pendingCount || pendingProducts.length },
-        { key: "rejected", label: isMobile ? "Red" : "Reddedilen", count: statistic?.deniedCount || rejectedProducts.length },
-        { key: "error", label: "Hatalı", count: statistic?.errorCount || errorProducts.length },
-        { key: "inactive", label: "İnaktif", count: statistic?.inactiveCount || inactiveProducts.length }
-    ], [statistic, products.length, approvedProducts.length, awaitingApprovalProducts.length, pendingProducts.length, rejectedProducts.length, errorProducts.length, inactiveProducts.length, isMobile]);
+        { key: "all", label: "Tümü", count: statistic?.totalCount ?? 0 },
+        { key: "approved", label: "Onaylı", count: statistic?.approvedCount ?? 0 },
+        { key: "awaiting", label: isMobile ? "Onay Bek." : "Onay Bekleyen", count: statistic?.awaitingApprovalCount ?? 0 },
+        { key: "pending", label: "Beklemede", count: statistic?.pendingCount ?? 0 },
+        { key: "rejected", label: isMobile ? "Red" : "Reddedilen", count: statistic?.deniedCount ?? 0 },
+        { key: "error", label: "Hatalı", count: statistic?.errorCount ?? 0 },
+        { key: "inactive", label: "İnaktif", count: statistic?.inactiveCount ?? 0 }
+    ], [statistic, isMobile]);
 
     
     // Memoized tab change handler with animation

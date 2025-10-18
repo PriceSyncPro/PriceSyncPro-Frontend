@@ -89,7 +89,7 @@ export interface ApiResponse<T> extends BaseApiResponse {
         items: T[];
         metadata: {
             pagination?: Pagination;
-            statistic?: Statistic;
+            Statistics?: Statistic;
         };
     };
 }
