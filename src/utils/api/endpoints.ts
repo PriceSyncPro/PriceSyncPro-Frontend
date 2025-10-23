@@ -2,7 +2,7 @@
 
 
 // API URL'leri için temel URL
-export const API_BASE_URL ='localhost:5000';
+export const API_BASE_URL ='api.pricesyncpro.com.tr';
 
 // Auth ile ilgili endpoint'ler
 export const AUTH_ENDPOINTS = {
