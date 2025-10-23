@@ -185,7 +185,7 @@ export const ProductAddTemplate: React.FC<ProductAddTemplateProps> = ({
                             selectedMethod={selectedMethod}
                             productCount={selectedProducts.length}
                             onAddNew={handleReset}
-                            onGoToList={() => router.push('/products')}
+                            onGoToList={() => router.push('/dashboard/products')}
                             color={getStepColor(3)}
                             isProcessing={isSubmitting}
                         />

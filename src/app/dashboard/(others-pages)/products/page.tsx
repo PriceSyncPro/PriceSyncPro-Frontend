@@ -258,7 +258,7 @@ function ProductsContent() {
     };
 
     const handleAddProduct = () => {
-        router.push("/product/add");
+        router.push("/dashboard/add-product");
     };
 
     const handleEditProduct = (product: Product) => {
