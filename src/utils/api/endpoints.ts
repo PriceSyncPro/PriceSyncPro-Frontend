@@ -2,7 +2,7 @@
 
 
 // API URL'leri için temel URL
-export const API_BASE_URL ='api.pricesyncpro.com.tr';
+export const API_BASE_URL ='localhost:5000';
 
 // Auth ile ilgili endpoint'ler
 export const AUTH_ENDPOINTS = {
@@ -23,7 +23,7 @@ export const RULE_ENDPOINTS = {
 // Kullanıcı ile ilgili endpoint'ler
 export const USER_ENDPOINTS = {
     ME: '/api/user/me',
-    GET_USER: '/users/getUser',
+    GET_USER: '/users/getInformation',
     UPDATE_PROFILE: '/users/updateUser',
     CHANGE_PASSWORD: '/api/user/change-password',
     UPLOAD_AVATAR: '/api/user/avatar',
@@ -42,7 +42,7 @@ export const PRODUCT_ENDPOINTS = {
     GET_BY_ID: '/odata/products',
     CREATE: '/products/create',
     UPDATE: '/products/update',
-    DELETE: '/odata/products'
+    DELETE: '/products/delete'
 };
 
 export const USERMARKETPLACES_ENDPOINTS = {

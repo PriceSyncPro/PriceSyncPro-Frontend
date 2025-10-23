@@ -4,7 +4,7 @@ import {User} from '../types/user'
 export type {User} from '../types/user'
 
 export interface LoginCredentials {
-    userNameOrEmail: string;
+    emailOrUserName: string;
     password: string;
     rememberMe?: boolean;
 }
@@ -26,9 +26,9 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface LoginResponseData {
-    accessToken: string;
-    user?: User;
-    expiresAt?: string;
+    token: string;
+    tfaCode?: User;
+    refreshToken?: string;
 }
 
 // LoginResponse artık ApiResponse'un özelleştirilmiş bir versiyonu

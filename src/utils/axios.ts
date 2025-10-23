@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/utils/api/endpoints";
 
 // Axios instance oluşturma
 const axiosInstance: AxiosInstance = axios.create({
-    baseURL: `https://${API_BASE_URL}`, // HTTP protokolünü ekle
+    baseURL: `http://${API_BASE_URL}`, // HTTP protokolünü ekle
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',

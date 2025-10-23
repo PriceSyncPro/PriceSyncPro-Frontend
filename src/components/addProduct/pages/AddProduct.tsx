@@ -92,9 +92,7 @@ export default function AddProduct(): React.ReactElement {
         setIsSubmitting(true);
         // Ürün verilerini hazırla
         const productData = {
-            products: selectedProducts.map((product: Product) => ({
-                name: product.name
-            })),
+            products: selectedProducts.map((product: Product) => (product.name)),
         };
         try {
             console.log(productData)
