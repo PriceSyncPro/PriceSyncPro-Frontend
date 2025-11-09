@@ -92,7 +92,6 @@ const ProductDesktopTable = memo<ProductDesktopTableProps>(function ProductDeskt
           <TableHeader className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/30">
             <TableRow className="border-b border-gray-200 dark:border-gray-700">
               <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">Ürün Adı</TableHead>
-              <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">Eşleştirilen Ürün</TableHead>
               <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">Durum</TableHead>
               <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">Aktiflik</TableHead>
               {title === "Onay Bekleyen Ürünler" && (
@@ -122,56 +121,20 @@ const ProductDesktopTable = memo<ProductDesktopTableProps>(function ProductDeskt
                           {PackageIcon}
                         </div>
                       </div>
-                      <span className="text-gray-900 dark:text-gray-100 font-medium">{product.name}</span>
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell>
-                    {showRemoteName ? (
-                      <div className="flex flex-col space-y-1">
-                        {product.remoteUrl ? (
-                          <a 
-                            href={product.remoteUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className={`flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer`}
-                            title={`${product.remoteName} - Ürün sayfasına git`}
-                          >
-                            <div className={isApproved ? 'text-emerald-500' : 'text-blue-500'}>
+                      <div className="flex flex-col">
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">{product.name}</span>
+                        {showRemoteName && (
+                          <div className="flex items-center space-x-1 mt-1">
+                            <div className={`${isApproved ? 'text-emerald-500' : 'text-blue-500'}`}>
                               {Link2Icon}
                             </div>
-                            <span className={`font-medium ${isApproved ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                            <span className={`text-xs font-medium ${isApproved ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
                               {product.remoteName}
-                            </span>
-                          </a>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <div className={isApproved ? 'text-emerald-500' : 'text-blue-500'}>
-                              {Link2Icon}
-                            </div>
-                            <span className={`font-medium ${isApproved ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                              {product.remoteName}
-                            </span>
-                          </div>
-                        )}
-                        {product.remoteUrl ? (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                            {product.remoteUrl}
-                          </span>
-                        ) : (
-                          <div className="flex items-center space-x-1">
-                            <div className="text-amber-500">
-                              {AlertTriangleIcon}
-                            </div>
-                            <span className="text-xs text-amber-600 dark:text-amber-400">
-                              URL bulunamadı
                             </span>
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-gray-400 dark:text-gray-500">—</span>
-                    )}
+                    </div>
                   </TableCell>
                   
                   <TableCell>

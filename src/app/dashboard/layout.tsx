@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import React from "react";
+import React, { useMemo } from "react";
 import { Toaster } from "sonner";
 import AnnouncementBanner from "@/components/common/AnnouncementBanner";
 import { AnnouncementProvider } from "@/context/AnnouncementContext";
@@ -17,41 +17,54 @@ export default function AdminLayout({
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const { isAuthenticated, loading } = useAuth();
 
-  if (loading || !isAuthenticated) {
-    return null;
-  }
+  // Memoize margin calculation to prevent unnecessary re-renders
+  const mainContentMargin = useMemo(() => {
+    if (isMobileOpen) return "ml-0";
+    if (isExpanded || isHovered) return "lg:ml-[290px]";
+    return "lg:ml-[90px]";
+  }, [isMobileOpen, isExpanded, isHovered]);
 
-  // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = isMobileOpen
-    ? "ml-0"
-    : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+  // Early return for loading/unauthenticated states
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <AnnouncementProvider>
       <div className="min-h-screen xl:flex">
         {/* Sidebar and Backdrop */}
         <AppSidebar />
-        <Toaster richColors />
+
+        {/* Toast Notifications - position optimized */}
+        <Toaster
+          richColors
+          position="top-right"
+          closeButton
+          toastOptions={{
+            className: "toast-custom",
+          }}
+        />
+
         <Backdrop />
-        
+
         {/* Main Content Area */}
         <div
           className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
         >
           {/* Header */}
           <AppHeader />
-          
+
           {/* Announcement Banner */}
-          <div className="mt-2">
-            <AnnouncementBanner />
-          </div>
-          
+          <AnnouncementBanner />
+
           {/* Page Content */}
-          <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+          <main className="p-1 mx-auto max-w-screen-2xl sm:p-4 md:p-6">
             {children}
-          </div>
+          </main>
         </div>
       </div>
     </AnnouncementProvider>

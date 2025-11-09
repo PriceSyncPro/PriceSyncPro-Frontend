@@ -75,7 +75,7 @@ export const ProductAddTemplate: React.FC<ProductAddTemplateProps> = ({
             className="border shadow-lg rounded-xl overflow-hidden"
         >
             {/* Adım göstergesi - renkli ve animasyonlu */}
-            <div className="mb-8 px-4">
+            <div className="mb-4 px-2 sm:mb-8 sm:px-4">
                 <StepIndicator
                     steps={steps}
                     currentStep={currentStep}
@@ -185,7 +185,7 @@ export const ProductAddTemplate: React.FC<ProductAddTemplateProps> = ({
                             selectedMethod={selectedMethod}
                             productCount={selectedProducts.length}
                             onAddNew={handleReset}
-                            onGoToList={() => router.push('/products')}
+                            onGoToList={() => router.push('/dashboard/products')}
                             color={getStepColor(3)}
                             isProcessing={isSubmitting}
                         />
@@ -194,7 +194,7 @@ export const ProductAddTemplate: React.FC<ProductAddTemplateProps> = ({
             </AnimatePresence>
 
             {/* İlerleme göstergesi */}
-            <div className="mt-8 flex justify-between items-center text-sm text-gray-500 border-t pt-4">
+            <div className="mt-4 flex justify-between items-center text-xs sm:text-sm text-gray-500 border-t pt-3 sm:mt-8 sm:pt-4">
                 <div>
                     {currentStep > 0 && currentStep < 3 && (
                         <button

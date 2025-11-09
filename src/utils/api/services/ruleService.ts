@@ -33,10 +33,19 @@ class RuleService {
     }
   }
 
+  async deleteRule(id: string): Promise<{ isSuccessful: boolean; errorMessages?: string[] }> {
+    try {
+      const response = await axios.delete(`${RULE_ENDPOINTS.DELETE}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      throw error;
+    }
+  }
+
   // Gelecekte eklenebilecek metodlar için placeholder'lar
   // async getRuleById(id: string): Promise<Rule> { }
   // async updateRule(id: string, ruleData: Partial<Rule>): Promise<Rule> { }
-  // async deleteRule(id: string): Promise<void> { }
 }
 
 export const ruleService = new RuleService();

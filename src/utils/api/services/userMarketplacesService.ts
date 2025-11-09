@@ -8,15 +8,21 @@ import {
 
 export class UserMarketplacesService {
     static async getAll(): Promise<UserMarketplace[]> {
-        const response = await axios.get<ApiResponse<UserMarketplace[]>>(
-            API_ENDPOINTS.USERMARKETPLACES.GET_ALL
-        );
-        
-        if (!response.data.isSuccessful) {
-            throw new Error(response.data.errorMessages?.join(', ') || 'Failed to get user marketplaces');
+        try {
+            const response = await axios.get<ApiResponse<UserMarketplace[]>>(
+                API_ENDPOINTS.USERMARKETPLACES.GET_ALL
+            );
+            
+            if (!response.data.isSuccessful) {
+                // Return empty array instead of throwing error when no data
+                return [];
+            }
+            
+            return response.data.data || [];
+        } catch (error) {
+            // Return empty array instead of throwing error
+            return [];
         }
-        
-        return response.data.data;
     }
 
     static async create(data: UserMarketplaceCreateData): Promise<void> {
@@ -27,6 +33,16 @@ export class UserMarketplacesService {
         
         if (!response.data.isSuccessful) {
             throw new Error(response.data.errorMessages?.join(', ') || 'Failed to create user marketplace');
+        }
+    }
+
+    static async delete(id: string): Promise<void> {
+        const response = await axios.delete<ApiResponse<null>>(
+            `${API_ENDPOINTS.USERMARKETPLACES.DELETE}/${id}`
+        );
+        
+        if (!response.data.isSuccessful) {
+            throw new Error(response.data.errorMessages?.join(', ') || 'Failed to delete user marketplace');
         }
     }
 }

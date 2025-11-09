@@ -3,7 +3,7 @@ export interface UserMarketplace {
     id: string;
     name: string;
     marketPlaceName: string;
-    createAt: string;
+    createdAt: string;
     isActive: boolean;
     isDeleted: boolean;
     deleteAt: string | null;

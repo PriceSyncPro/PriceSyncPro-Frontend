@@ -52,9 +52,9 @@ export default function Avatar({ name, src, size = 'md', className = '' }: Avata
       md: 44,
       lg: 64
     };
-    
+
     return (
-      <div className={`overflow-hidden rounded-full ${sizeClasses[size]} ${className}`}>
+      <div className={`overflow-hidden rounded-full relative ${sizeClasses[size]} ${className}`}>
         <Image
           src={src}
           alt={name}
@@ -69,7 +69,7 @@ export default function Avatar({ name, src, size = 'md', className = '' }: Avata
 
   return (
     <div
-      className={`overflow-hidden rounded-full flex items-center justify-center ${bgColor} text-white font-bold ${sizeClasses[size]} ${className}`}
+      className={`overflow-hidden rounded-full flex items-center justify-center relative ${bgColor} text-white font-bold ${sizeClasses[size]} ${className}`}
     >
       {initial}
     </div>

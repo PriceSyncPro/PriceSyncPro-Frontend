@@ -1,7 +1,7 @@
 
 
 // API URL'leri için temel URL
-export const API_BASE_URL ='192.168.1.38:5000';
+export const API_BASE_URL ='api.pricesyncpro.com.tr';
 
 // Auth ile ilgili endpoint'ler
 export const AUTH_ENDPOINTS = {
@@ -16,7 +16,8 @@ export const AUTH_ENDPOINTS = {
 
 export const RULE_ENDPOINTS = {
     GET_ALL:'/rules/getall',
-    CREATE: '/rules/create'
+    CREATE: '/rules/create',
+    DELETE: '/rules/delete'
 };
 
 // Kullanıcı ile ilgili endpoint'ler
@@ -38,7 +39,7 @@ export const DASHBOARD_ENDPOINTS = {
 // Diğer modüller için endpoint'ler
 export const PRODUCT_ENDPOINTS = {
     GET_ALL: '/products/getall',
-    GET_BY_ID: '/odata/products',
+    GET_BY_ID: '/products/get',
     CREATE: '/products/create',
     UPDATE: '/products/update',
     DELETE: '/products/delete'
@@ -46,7 +47,8 @@ export const PRODUCT_ENDPOINTS = {
 
 export const USERMARKETPLACES_ENDPOINTS = {
     GET_ALL: '/usermarketplaces/getall',
-    CREATE: '/usermarketplaces/create'
+    CREATE: '/usermarketplaces/create',
+    DELETE: '/usermarketplaces/delete'
 };
 
 export const MARKETPLACES_ENDPOINTS = {
@@ -70,7 +72,8 @@ export const API_ENDPOINTS = {
     PRODUCTS: PRODUCT_ENDPOINTS,
     USERMARKETPLACES: USERMARKETPLACES_ENDPOINTS,
     MARKETPLACES: MARKETPLACES_ENDPOINTS,
-    TRANSACTIONS: TRANSACTIONS_ENDPOINTS
+    TRANSACTIONS: TRANSACTIONS_ENDPOINTS,
+    RULES: RULE_ENDPOINTS
 };
 
 export default API_ENDPOINTS;

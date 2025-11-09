@@ -3,6 +3,6 @@
 import React from "react";
 import AddProduct from "@/components/addProduct/pages/AddProduct";
 
-export default function AddProductPage(): React.ReactElement {
+export default function AddProductPage(): React.ReactElement<any> {
     return <AddProduct />;
 }

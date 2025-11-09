@@ -9,7 +9,7 @@ import { FileSpreadsheet, Edit, CheckCircle, ArrowRight } from "lucide-react";
 import { ProductService } from "@/utils/api/services/productService";
 import {toast} from "sonner";
 
-export default function AddProduct(): React.ReactElement {
+export default function AddProduct(): React.ReactElement<any> {
     const [currentStep, setCurrentStep] = useState<number>(0);
     const [selectedMethod, setSelectedMethod] = useState<"manual" | "excel" | null>(null);
     const [productName, setProductName] = useState<string>("");
@@ -142,11 +142,10 @@ export default function AddProduct(): React.ReactElement {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="min-h-screen bg-gradient-to-br from-white to-blue-50"
+            className="min-h-screen"
         >
-            <PageBreadcrumb pageTitle="Ürün Ekle" />
             <motion.div
-                className="space-y-4 mx-auto p-6"
+                className="space-y-4 mx-auto p-1 sm:p-3 md:p-6"
                 initial={{ scale: 0.95 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.3 }}

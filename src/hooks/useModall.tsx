@@ -71,7 +71,7 @@ const getModalConfig = (type: ModalType) => {
     }
 };
 
-export function useModal({ 
+export function useModall({
     type,
     onConfirm, 
     title,
@@ -209,7 +209,7 @@ export function useDeleteModal({
     title?: string;
     description?: string;
 }) {
-    const { openModal, closeModal, Modal } = useModal({
+    const { openModal, closeModal, Modal } = useModall({
         type: ModalType.DELETE,
         onConfirm: async (id?: string) => {
             if (id) await onDelete(id);

@@ -8,6 +8,8 @@ import Label from "../form/Label";
 import { UserMarketplace, UserMarketplaceCreateData } from "@/utils/types/userMarketplaces";
 import { Marketplace } from "@/utils/types/marketplaces";
 import { MarketplacesService, UserMarketplacesService } from "@/utils/api/services";
+import { Trash2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface UserSellerInfoCardProps {
   marketplaces: UserMarketplace[];
@@ -21,12 +23,45 @@ export default function UserSellerInfoCard({ marketplaces, loading }: UserSeller
     { id: Date.now().toString(), marketplaceId: "", sellerName: "" }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingMarketplaceId, setDeletingMarketplaceId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchAvailableMarketplaces();
     }
   }, [isOpen]);
+
+  // Handle escape key press and outside clicks for delete confirmation
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showDeleteConfirm) {
+        handleDeleteCancel();
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDeleteConfirm) {
+        const target = event.target as Element;
+        const popover = document.querySelector(`[data-delete-popover="${showDeleteConfirm}"]`);
+        const button = document.querySelector(`[data-delete-button="${showDeleteConfirm}"]`);
+        
+        if (popover && button && !popover.contains(target) && !button.contains(target)) {
+          handleDeleteCancel();
+        }
+      }
+    };
+
+    if (showDeleteConfirm) {
+      document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDeleteConfirm]);
 
   const fetchAvailableMarketplaces = async () => {
     try {
@@ -64,7 +99,7 @@ export default function UserSellerInfoCard({ marketplaces, loading }: UserSeller
     );
 
     if (validEntries.length === 0) {
-      alert('Lütfen en az bir marketplace seçin ve satıcı adını girin');
+      toast.error('Lütfen en az bir marketplace seçin ve satıcı adını girin');
       return;
     }
 
@@ -78,15 +113,46 @@ export default function UserSellerInfoCard({ marketplaces, loading }: UserSeller
         await UserMarketplacesService.create(createData);
       }
       
+      toast.success(
+        validEntries.length === 1 
+          ? 'Marketplace bağlantısı başarıyla eklendi' 
+          : `${validEntries.length} marketplace bağlantısı başarıyla eklendi`
+      );
+      
       setMarketplaceEntries([{ id: Date.now().toString(), marketplaceId: "", sellerName: "" }]);
       closeModal();
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create marketplace connection:', error);
-      alert('Marketplace bağlantısı oluşturulurken bir hata oluştu');
+      const errorMessage = error.message || 'Marketplace bağlantısı oluşturulurken bir hata oluştu';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteMarketplace = async (marketplaceId: string) => {
+    setDeletingMarketplaceId(marketplaceId);
+    try {
+      await UserMarketplacesService.delete(marketplaceId);
+      toast.success('Marketplace bağlantısı başarıyla silindi');
+      window.location.reload();
+    } catch (error: any) {
+      const errorMessage = error.message || 'Marketplace bağlantısı silinirken bir hata oluştu';
+      toast.error(errorMessage);
+      console.error('Delete marketplace error:', error);
+    } finally {
+      setDeletingMarketplaceId(null);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteConfirm = (marketplaceId: string) => {
+    setShowDeleteConfirm(marketplaceId);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(null);
   };
 
   return (
@@ -116,7 +182,7 @@ export default function UserSellerInfoCard({ marketplaces, loading }: UserSeller
           ) : marketplaces.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {marketplaces.map((marketplace) => (
-                <div key={marketplace.id} className="p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
+                <div key={marketplace.id} className="p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow relative">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
@@ -126,25 +192,78 @@ export default function UserSellerInfoCard({ marketplaces, loading }: UserSeller
                         {marketplace.marketPlaceName}
                       </p>
                     </div>
-                    <span className={`ml-2 px-2 py-1 text-xs rounded-full font-medium flex-shrink-0 ${
-                      marketplace.isActive 
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      {marketplace.isActive ? 'Aktif' : 'Pasif'}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 text-xs rounded-full font-medium flex-shrink-0 ${
+                        marketplace.isActive 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
+                        {marketplace.isActive ? 'Aktif' : 'Pasif'}
+                      </span>
+                      <button
+                        data-delete-button={marketplace.id}
+                        onClick={() => handleDeleteConfirm(marketplace.id)}
+                        disabled={deletingMarketplaceId === marketplace.id}
+                        className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Marketplace bağlantısını sil"
+                      >
+                        {deletingMarketplaceId === marketplace.id ? (
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>{new Date(marketplace.createAt).toLocaleDateString('tr-TR', {
+                    <span>{new Date(marketplace.createdAt).toLocaleDateString('tr-TR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric'
                     })}</span>
                   </div>
+
+                  {/* Delete Confirmation Popover */}
+                  {showDeleteConfirm === marketplace.id && deletingMarketplaceId !== marketplace.id && (
+                    <div 
+                      data-delete-popover={marketplace.id}
+                      className="absolute right-2 top-full mt-2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 min-w-[280px]"
+                    >
+                      <div className="flex flex-col space-y-3">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              Marketplace Bağlantısını Sil
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              "{marketplace.name}" bağlantısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={handleDeleteCancel}
+                            className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                          >
+                            İptal
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMarketplace(marketplace.id)}
+                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

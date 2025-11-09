@@ -7,7 +7,6 @@ import {
   BoxIconLine,
   GridIcon,
   HorizontaLDots,
-  RuleSettings,
   UserCircleIcon,
 } from "../icons/index";
 
@@ -58,26 +57,6 @@ const navCategories: NavCategory[] = [
         </svg>,
         name: "Ürünlerim",
         path: "/dashboard/products"
-      }
-    ]
-  },
-  {
-    title: "Kurallar",
-    icon: <RuleSettings />,
-    items: [
-      {
-        icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>,
-        name: "Kural Ekle",
-        path: "/dashboard/add-rule"
-      },
-      {
-        icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>,
-        name: "Mevcut Kurallar",
-        path: "/dashboard/rules"
       }
     ]
   },
@@ -150,17 +129,16 @@ const AppSidebar: React.FC = () => {
 
 
   // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
 
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${
-          isExpanded || isMobileOpen
-            ? "w-[290px]"
-            : isHovered
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
+        ${isExpanded || isMobileOpen
+          ? "w-[290px]"
+          : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
@@ -170,28 +148,27 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}
       >
         <Link href="/" onClick={closeMobileSidebar} className="flex items-center">
           {isExpanded || isHovered || isMobileOpen ? (
-              <>
-                <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                  <svg className="w-5 h-5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
-                <span className="text-xl font-black text-gray-900 dark:text-white">
-                  PriceSyncPro
-                </span>
-              </>
-          ) : (
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center shadow-sm">
+            <>
+              <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center mr-3 shadow-sm">
                 <svg className="w-5 h-5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
+              <span className="text-xl font-black text-gray-900 dark:text-white">
+                PriceSyncPro
+              </span>
+            </>
+          ) : (
+            <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <svg className="w-5 h-5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
           )}
         </Link>
       </div>
@@ -202,11 +179,10 @@ const AppSidebar: React.FC = () => {
             {navCategories.map((category) => (
               <div key={category.title}>
                 <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                    !isExpanded && !isHovered
-                      ? "lg:justify-center"
-                      : "justify-start"
-                  }`}
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                    }`}
                 >
                   {isExpanded || isHovered || isMobileOpen ? (
                     category.title
@@ -220,16 +196,14 @@ const AppSidebar: React.FC = () => {
                       <Link
                         href={item.path || "#"}
                         onClick={closeMobileSidebar}
-                        className={`menu-item group ${
-                          item.path && isActive(item.path) ? "menu-item-active" : "menu-item-inactive"
-                        }`}
+                        className={`menu-item group ${item.path && isActive(item.path) ? "menu-item-active" : "menu-item-inactive"
+                          }`}
                       >
                         <span
-                          className={`${
-                            item.path && isActive(item.path)
-                              ? "menu-item-icon-active"
-                              : "menu-item-icon-inactive"
-                          }`}
+                          className={`${item.path && isActive(item.path)
+                            ? "menu-item-icon-active"
+                            : "menu-item-icon-inactive"
+                            }`}
                         >
                           {item.icon}
                         </span>
@@ -245,14 +219,12 @@ const AppSidebar: React.FC = () => {
           </div>
         </nav>
       </div>
-      
+
       {/* Footer */}
-      <div className={`pb-6 pt-4 border-t border-gray-200 dark:border-gray-700 ${
-        !isExpanded && !isHovered ? "lg:px-2" : "px-0"
-      }`}>
-        <div className={`flex items-center ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+      <div className={`pb-6 pt-4 border-t border-gray-200 dark:border-gray-700 ${!isExpanded && !isHovered ? "lg:px-2" : "px-0"
         }`}>
+        <div className={`flex items-center ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}>
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-gray-900 dark:text-white">

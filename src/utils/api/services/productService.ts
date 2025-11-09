@@ -108,6 +108,59 @@ export class ProductService {
     }
 
     /**
+     * ID'ye göre ürün detaylarını getir (rules ile birlikte)
+     */
+    static async getProductDetails(id: string): Promise<{
+        data: {
+            name: string;
+            rules: Array<{
+                ruleType: number;
+                ruleTypeName: string;
+                id: string;
+                isActive: boolean;
+                createdAt: string;
+            }>;
+            id: string;
+            productStatus: number;
+            isActive: boolean;
+            createdAt: string;
+        };
+        errorMessages: string[] | null;
+        isSuccessful: boolean;
+        statusCode: number;
+    }> {
+        try {
+            const response = await axios.get(
+                `${API_ENDPOINTS.PRODUCTS.GET_BY_ID}/${id}`
+            );
+            return response.data;
+        } catch (error: unknown) {
+            // Hata durumunda standart response döndür
+            const errorMessage = error && typeof error === 'object' && 'message' in error 
+                ? (error as { message: string }).message 
+                : 'Ürün detayları getirilirken bir hata oluştu';
+            
+            const statusCode = error && typeof error === 'object' && 'response' in error
+                ? (error as { response?: { status?: number } }).response?.status || 500
+                : 500;
+            
+            return {
+                data: {
+                    name: '',
+                    productStatus: 0,
+                    rules: [],
+                    id: '',
+                    isActive: false,
+                    createdAt: ''
+                },
+                errorMessages: [errorMessage],
+                isSuccessful: false,
+                statusCode
+            };
+        }
+    }
+
+    /**
      * Yeni ürün oluştur
      */
     static async create(productData: CreateProductRequest): Promise<SingleApiResponse<Product>> {
@@ -132,8 +185,11 @@ export class ProductService {
     static async update(id: string, product: UpdateProductRequest): Promise<SingleApiResponse<Product>> {
         try {
             const response = await axios.put<SingleApiResponse<Product>>(
-                `${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
-                product
+                API_ENDPOINTS.PRODUCTS.UPDATE,
+                {
+                    id: id,
+                    ...product
+                }
             );
             return response.data;
         } catch (error: unknown) {
@@ -219,6 +275,7 @@ export class ProductService {
             ) as ApiResponse<ApiResponseData<Product>>;
         }
     }
+
 }
 
 export default ProductService;

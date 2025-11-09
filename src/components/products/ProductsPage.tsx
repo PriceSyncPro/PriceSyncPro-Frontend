@@ -4,13 +4,23 @@ import { Product, Statistic } from "@/utils/types/Products";
 import { Pagination as PaginationType } from "@/utils/types/Pagination";
 import {
     Package,
+    Calendar,
+    ExternalLink,
+    Eye,
+    Edit,
+    Trash2,
+    CheckCircle,
+    AlertCircle,
+    Clock,
+    XCircle,
+    Ban,
+    Power
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getStatusText,getStatusInfo,getTabColor, createProductGroups, renderSmallEmptyMessage } from "./ProductsPageFunctions";
+import { getStatusText, getStatusInfo, getTabColor, createProductGroups, renderSmallEmptyMessage } from "./ProductsPageFunctions";
 import Pagination from "./ProductsPagination";
-import ProductDesktopTable from "./ProductsDesktopTable";
-import ProductMobileCards from "./ProductMobileCards";
+import ProductModal from "./ProductModal";
 
 
 
@@ -77,6 +87,8 @@ const ProductsPage = memo(function ProductsPage({
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [contentKey, setContentKey] = useState<string>(activeTab); // For animation trigger
     const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+    const [selectedProductId, setSelectedProductId] = useState<string | null>(null); // Product detail modal
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     React.useEffect(() => {
         const checkMobile = () => {
@@ -138,33 +150,103 @@ const ProductsPage = memo(function ProductsPage({
     } = productsGroups;
 
 
-    // Memoized product list render function with bug fix
-    const renderProductList = useCallback((productList: Product[], title: string, description: string, className: string = "") => {
-        return isMobile ?
-            <ProductMobileCards
-                productList={productList}
-                title={title}
-                description={description}
-                className={className}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onApprove={onApprove}
-                getStatusInfo={getStatusInfo}
-                getStatusText={getStatusText}
-            />
-            :
-            <ProductDesktopTable
-                productList={productList}
-                title={title}
-                description={description}
-                className={className}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onApprove={onApprove}
-                getStatusInfo={getStatusInfo}
-                getStatusText={getStatusText}
-            />;
-    }, [isMobile, onEdit, onDelete, onApprove]);
+    // Handle product detail modal
+    const openProductDetail = useCallback((product: Product) => {
+        setSelectedProductId(product.id);
+        setIsDetailModalOpen(true);
+    }, []);
+
+    const closeProductDetail = useCallback(() => {
+        setSelectedProductId(null);
+        setIsDetailModalOpen(false);
+    }, []);
+
+    // Handle modal actions that need to work with productId
+    const handleProductEdit = useCallback((productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (product && onEdit) {
+            onEdit(product);
+        }
+    }, [products, onEdit]);
+
+    const handleProductApprove = useCallback((productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (product && onApprove) {
+            onApprove(product);
+        }
+    }, [products, onApprove]);
+
+    // Get status icon
+    const getStatusIcon = useCallback((status: number) => {
+        switch (status) {
+            case 5: // Approved
+                return <CheckCircle className="h-4 w-4 text-green-500" />;
+            case 4: // Awaiting Approval  
+                return <Clock className="h-4 w-4 text-yellow-500" />;
+            case 3: // Pending
+                return <AlertCircle className="h-4 w-4 text-blue-500" />;
+            case 2: // Rejected
+                return <XCircle className="h-4 w-4 text-red-500" />;
+            case 1: // Error
+                return <Ban className="h-4 w-4 text-orange-500" />;
+            case 0: // Inactive
+                return <Power className="h-4 w-4 text-gray-500" />;
+            default:
+                return <AlertCircle className="h-4 w-4 text-gray-500" />;
+        }
+    }, []);
+
+    // Product Card Component - Compact Version
+    const ProductCard = memo(function ProductCard({ product }: { product: Product }) {
+        const statusInfo = getStatusInfo(product.productStatus);
+        
+        return (
+            <Card 
+                className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer bg-white dark:bg-gray-800"
+                onClick={() => openProductDetail(product)}
+            >
+                <CardContent className="p-4">
+                    {/* Compact Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                            <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <Package className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    {product.name}
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-2">
+                            {getStatusIcon(product.productStatus)}
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusInfo.className}`}>
+                                {getStatusText(product.productStatus)}
+                            </span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    });
+
+    // Memoized product list render function
+    const renderProductList = useCallback((productList: Product[], title: string, description: string) => {
+        return (
+            <div className="space-y-4">
+                <div className="border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {productList.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                </div>
+            </div>
+        );
+    }, [openProductDetail, onEdit, onDelete, onApprove, getStatusIcon]);
 
     // Memoized empty state component
     const renderEmptyState = useCallback(() => {
@@ -218,16 +300,16 @@ const ProductsPage = memo(function ProductsPage({
         );
     });
 
-    // Memoized tab data - Önce statistic verilerini kullan, yoksa 0 göster
+    // Memoized tab data - API'den gelen statistic verilerini kullan
     const tabData = useMemo(() => [
-        { key: "all", label: "Tümü", count: statistic?.totalCount ?? 0 },
-        { key: "approved", label: "Onaylı", count: statistic?.approvedCount ?? 0 },
-        { key: "awaiting", label: isMobile ? "Onay Bek." : "Onay Bekleyen", count: statistic?.awaitingApprovalCount ?? 0 },
-        { key: "pending", label: "Beklemede", count: statistic?.pendingCount ?? 0 },
-        { key: "rejected", label: isMobile ? "Red" : "Reddedilen", count: statistic?.deniedCount ?? 0 },
-        { key: "error", label: "Hatalı", count: statistic?.errorCount ?? 0 },
-        { key: "inactive", label: "İnaktif", count: statistic?.inactiveCount ?? 0 }
-    ], [statistic, isMobile]);
+        { key: "all", label: "Tümü", count: statistic?.totalCount || products.length },
+        { key: "approved", label: "Onaylı", count: statistic?.approvedCount || approvedProducts.length },
+        { key: "awaiting", label: isMobile ? "Onay Bek." : "Onay Bekleyen", count: statistic?.awaitingApprovalCount || awaitingApprovalProducts.length },
+        { key: "pending", label: "Beklemede", count: statistic?.pendingCount || pendingProducts.length },
+        { key: "rejected", label: isMobile ? "Red" : "Reddedilen", count: statistic?.deniedCount || rejectedProducts.length },
+        { key: "error", label: "Hatalı", count: statistic?.errorCount || errorProducts.length },
+        { key: "inactive", label: "İnaktif", count: statistic?.inactiveCount || inactiveProducts.length }
+    ], [statistic, products.length, approvedProducts.length, awaitingApprovalProducts.length, pendingProducts.length, rejectedProducts.length, errorProducts.length, inactiveProducts.length, isMobile]);
 
     
     // Memoized tab change handler with animation
@@ -275,64 +357,75 @@ const ProductsPage = memo(function ProductsPage({
     }, [activeTab, awaitingApprovalProducts, approvedProducts, pendingProducts, rejectedProducts, errorProducts, inactiveProducts, products.length, renderProductList]);
 
     return (
-        <div className="space-y-4 sm:space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/50 dark:to-purple-950/50 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                        Ürünlerim
-                    </h1>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                        Tüm ürünlerinizi tek yerden yönetin ve durumlarını takip edin.
-                    </p>
+        <>
+            <div className="space-y-4 sm:space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/50 dark:to-purple-950/50 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                            Ürünlerim
+                        </h1>
+                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                            Tüm ürünlerinizi tek yerden yönetin ve durumlarını takip edin.
+                        </p>
+                    </div>
+                    {AddButton}
                 </div>
-                {AddButton}
-            </div>
 
-            <Card className="border-0 shadow-sm">
-                <CardContent className="p-4 sm:p-6">
-                    <div className="space-y-4 sm:space-y-6">
-                        {/* Custom Tab List - Her zaman görünür */}
-                        <ScrollArea className="w-full">
-                            <div className="flex space-x-1 sm:space-x-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl min-w-max">
-                                {tabData.map((tab) => (
-                                    <CustomTab
-                                        key={tab.key}
-                                        tabKey={tab.key}
-                                        label={tab.label}
-                                        count={tab.count}
-                                        isActive={activeTab === tab.key}
-                                        onClick={() => handleTabChange(tab.key)}
-                                    />
-                                ))}
-                            </div>
-                        </ScrollArea>
+                <Card className="border-0 shadow-sm">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="space-y-4 sm:space-y-6">
+                            {/* Custom Tab List - Her zaman görünür */}
+                            <ScrollArea className="w-full">
+                                <div className="flex space-x-1 sm:space-x-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl min-w-max">
+                                    {tabData.map((tab) => (
+                                        <CustomTab
+                                            key={tab.key}
+                                            tabKey={tab.key}
+                                            label={tab.label}
+                                            count={tab.count}
+                                            isActive={activeTab === tab.key}
+                                            onClick={() => handleTabChange(tab.key)}
+                                        />
+                                    ))}
+                                </div>
+                            </ScrollArea>
 
-                        {/* Tab Content with Animation */}
-                        <div className="mt-6 sm:mt-8">
-                            <div
-                                className={`transition-all duration-300 ease-in-out ${
-                                    isTransitioning
-                                        ? 'opacity-0 translate-y-2'
-                                        : 'opacity-100 translate-y-0'
-                                }`}
-                            >
-                                {isLoading ? (
-                                    <TabContentLoading />
-                                ) : products.length === 0 && contentKey === "all" ? (
-                                    renderEmptyState()
-                                ) : (
-                                    getActiveTabContent
-                                )}
+                            {/* Tab Content with Animation */}
+                            <div className="mt-6 sm:mt-8">
+                                <div
+                                    className={`transition-all duration-300 ease-in-out ${
+                                        isTransitioning
+                                            ? 'opacity-0 translate-y-2'
+                                            : 'opacity-100 translate-y-0'
+                                    }`}
+                                >
+                                    {isLoading ? (
+                                        <TabContentLoading />
+                                    ) : products.length === 0 && contentKey === "all" ? (
+                                        renderEmptyState()
+                                    ) : (
+                                        getActiveTabContent
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Pagination */}
-                    <Pagination pagination={pagination} onPageChange={onPageChange}/>
-                </CardContent>
-            </Card>
-        </div>
+                        {/* Pagination */}
+                        <Pagination pagination={pagination} onPageChange={onPageChange}/>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <ProductModal
+                productId={selectedProductId}
+                triggerOpen={isDetailModalOpen}
+                onModalClose={closeProductDetail}
+                onEdit={handleProductEdit}
+                onDelete={onDelete}
+                onApprove={handleProductApprove}
+            />
+        </>
     );
 });
 
