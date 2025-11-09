@@ -12,7 +12,7 @@ import AlertMessage from "./AlertMessage";
 
 export default function SignInForm() {
   const [formData, setFormData] = useState({
-    emailOrUserName: '',
+    userNameOrEmail: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +21,7 @@ export default function SignInForm() {
 
   // Validation kuralları
   const validationRules = {
-    emailOrUserName: {
+    userNameOrEmail: {
       required: true,
       minLength: 3,
       custom: (value: string) => {
@@ -53,7 +53,7 @@ export default function SignInForm() {
       // Giriş başarılıysa formu temizle
       if (loginSuccess) {
         setFormData({
-          emailOrUserName: '',
+          userNameOrEmail: '',
           password: ''
         });
         setShowPassword(false);
@@ -158,8 +158,8 @@ export default function SignInForm() {
                     className="w-full h-12 pl-12 pr-4 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:bg-white transition-all font-medium"
                     placeholder="kullanici@example.com"
                     type="text"
-                    value={formData.emailOrUserName}
-                    onChange={(e) => handleInputChange("emailOrUserName", e.target.value)}
+                    value={formData.userNameOrEmail}
+                    onChange={(e) => handleInputChange("userNameOrEmail", e.target.value)}
                     required
                     disabled={loading}
                   />

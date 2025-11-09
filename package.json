@@ -2,6 +2,10 @@
   "name": "pricesyncpro-frontend",
   "version": "2.0.0",
   "private": true,
+  "description": "PriceSync Pro, e-ticaret platformlarında ürün fiyat takibi ve yönetimi için geliştirilmiş modern bir web uygulamasıdır. **Next.js 15**, **React 18**, **TypeScript** ve **Tailwind CSS** teknolojileri kullanılarak geliştirilmiştir.",
+  "main": "postcss.config.js",
+  "author": "",
+  "license": "ISC",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
