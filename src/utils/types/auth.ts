@@ -4,7 +4,7 @@ import {User} from '../types/user'
 export type {User} from '../types/user'
 
 export interface LoginCredentials {
-    userNameOrEmail: string;
+    emailOrUserName: string;
     password: string;
     rememberMe?: boolean;
 }

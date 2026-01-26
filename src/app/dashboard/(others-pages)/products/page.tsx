@@ -246,7 +246,6 @@ export default function Products() {
     if (error && error !== "Ürün bulunamadı.") {
         return <ErrorComponent />;
     }
-
     return (
         <div className={animateClass}>
             <ProductsPage
