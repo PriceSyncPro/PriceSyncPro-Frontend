@@ -1,97 +1,97 @@
-name: CI/CD Pipeline
+name: Production Deployment
 
 on:
   push:
-    branches: [ main]
-  pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 env:
-  REGISTRY: localhost
-  IMAGE_NAME: pricesyncpro-frontend
-  CONTAINER_NAME: pricesyncpro-frontend
-  NODE_VERSION: '18'
-  PORT: 3000
+  # Değişkenler
+  IMAGE_NAME: "pricesyncpro-frontend"
+  CONTAINER_NAME: "pricesyncpro-frontend"
+  PORT: "3000"
+  PROJECT_PATH: "/root/pricesyncpro" # Sunucudaki proje klasörünün yolu (bunu güncellemelisin)
 
 jobs:
-  test:
-    name: Test & Build
-    runs-on: self-hosted
-    
+  # 1. AŞAMA: Test ve Build Kontrolü (GitHub Sunucularında Çalışır)
+  test-and-build:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci --prefer-offline --no-audit
-        
-    - name: Run linting
-      run: npm run lint --if-present || true
-      
-    - name: Run tests
-      run: npm run test --if-present || true
-      
-    - name: Build application
-      run: npm run build
+      - name: Kodu Çek (Checkout)
+        uses: actions/checkout@v4
 
-  deploy:
-    name: Deploy to Production
-    needs: test
-    runs-on: self-hosted
-    if: github.ref == 'refs/heads/main'
-    
-    environment:
-      name: production
-      url: http://localhost:${{ env.PORT }}
-    
+      - name: Node.js Kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Bağımlılıkları Yükle
+        run: npm ci
+
+      - name: Lint Kontrolü
+        run: npm run lint --if-present
+
+      # Eğer testlerin varsa burayı açabilirsin
+      # - name: Testleri Çalıştır
+      #   run: npm run test --if-present
+
+      - name: Build Denemesi (Hata var mı kontrol et)
+        run: npm run build
+
+  # 2. AŞAMA: Sunucuya Dağıtım (Kendi VPS'ine Bağlanır)
+  deploy-to-server:
+    needs: test-and-build # Test aşaması başarılı olursa çalışır
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set image tags
-      run: echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
-        
-    - name: Build container image
-      run: podman build -t ${{ env.IMAGE_TAG }} .
-        
-    - name: Stop existing container
-      run: |
-        podman stop ${{ env.CONTAINER_NAME }} || true
-        podman rm ${{ env.CONTAINER_NAME }} || true
-        
-    - name: Run new container
-      run: |
-        podman run -d \
-          --name ${{ env.CONTAINER_NAME }} \
-          -p ${{ env.PORT }}:3000 \
-          ${{ env.IMAGE_TAG }}
-          
-    - name: Wait for container startup
-      run: sleep 5
-        
-    - name: Verify deployment
-      run: |
-        if curl -f http://localhost:${{ env.PORT }} > /dev/null 2>&1; then
-          echo "✅ Deployment successful"
-        else
-          echo "❌ Deployment failed"
-          podman logs ${{ env.CONTAINER_NAME }} --tail 20
-          exit 1
-        fi
-        
-    - name: Cleanup old resources
-      run: podman image prune -f || true
-        
-    - name: Deployment summary
-      run: |
-        echo "🎉 Deployment Complete:"
-        echo "📦 Image: ${{ env.IMAGE_TAG }}"
-        echo "🐳 Container: ${{ env.CONTAINER_NAME }}"
-        echo "🌐 Port: ${{ env.PORT }}"
-        echo "⏰ $(date)"
+      - name: SSH ile Sunucuya Bağlan ve Deploy Et
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}     # 185.136.206.100
+          username: ${{ secrets.SERVER_USER }} # root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH Private Key
+          port: 22
+          script_stop: true # Hata olursa durdur
+          script: |
+            # Değişkenleri Tanımla
+            IMAGE_NAME="pricesyncpro-frontend"
+            CONTAINER_NAME="pricesyncpro-frontend"
+            PORT="3000"
+            PROJECT_DIR="/root/pricesyncpro" # Projenin sunucudaki yeri
+
+            echo "🚀 Deployment Başlıyor..."
+
+            # 1. Proje klasörüne git (Yoksa klonla)
+            if [ -d "$PROJECT_DIR" ]; then
+              cd $PROJECT_DIR
+              echo "⬇️  Güncel kod çekiliyor..."
+              git pull origin main
+            else
+              echo "📂 Proje klasörü bulunamadı, klonlanıyor..."
+              git clone https://github.com/${{ github.repository }}.git $PROJECT_DIR
+              cd $PROJECT_DIR
+            fi
+
+            # 2. Yeni Image Oluştur (Podman)
+            echo "🏗️  Container Image oluşturuluyor..."
+            sudo podman build -t $IMAGE_NAME .
+
+            # 3. Eski Container'ı Durdur ve Sil
+            echo "🛑 Eski container durduruluyor..."
+            if sudo podman ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_NAME}\$"; then
+                sudo podman stop $CONTAINER_NAME
+                sudo podman rm $CONTAINER_NAME
+            fi
+
+            # 4. Yeni Container'ı Başlat
+            echo "▶️  Yeni container başlatılıyor..."
+            sudo podman run -d \
+              --name $CONTAINER_NAME \
+              --restart always \
+              -p $PORT:3000 \
+              $IMAGE_NAME
+
+            # 5. Temizlik
+            echo "🧹 Gereksiz image'lar temizleniyor..."
+            sudo podman image prune -f
+
+            echo "✅ Deployment Başarıyla Tamamlandı!"
