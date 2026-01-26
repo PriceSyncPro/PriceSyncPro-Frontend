@@ -8,7 +8,7 @@ const criticalStyles = `
     background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   }
   .animate-fade-in {
-    animation: fadeIn 0.6s ease-out;
+    animation: fadeIn 0.6s ease-out; 
   }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
